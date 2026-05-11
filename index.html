@@ -1,1 +1,1799 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17212b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SJP Scores">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href='data:application/manifest+json,{"name":"SJP Olympiad Scoring","short_name":"SJP Scores","start_url":"./","display":"standalone","background_color":"#f4f6f1","theme_color":"#17212b","icons":[{"src":"https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/scoreboard.svg","sizes":"192x192","type":"image/svg+xml"},{"src":"https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/trophy.svg","sizes":"512x512","type":"image/svg+xml"}]}'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Lexend:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>SJP Olympiad Scoring</title>
+  <style>
+    :root {
+      --page-gutter: 12px;
+      --nav-offset: calc(78px + env(safe-area-inset-bottom));
+      --bg: #eef2eb;
+      --surface: #ffffff;
+      --surface-soft: #f5f7f2;
+      --surface-strong: #e7ece4;
+      --ink: #17212b;
+      --muted: #5b6670;
+      --border: #1f2933;
+      --border-soft: rgba(23, 33, 43, 0.14);
+      --navy: #17212b;
+      --green: #4d6b2a;
+      --green-soft: #e5edd7;
+      --yellow: #f5c518;
+      --yellow-soft: #fff5c9;
+      --red: #c83d31;
+      --red-soft: #f7d8d2;
+      --purple: #7c3aed;
+      --success-bg: #dcfce7;
+      --success-ink: #14532d;
+      --danger-bg: #fee2e2;
+      --danger-ink: #7f1d1d;
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --shadow-card: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --shadow-press: inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+      color-scheme: light;
+      font-family: "Lexend", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+      height: -webkit-fill-available;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 34%),
+        linear-gradient(180deg, #f7f9f5 0%, var(--bg) 100%);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top) 0 0;
+    }
+
+    button,
+    select,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 10px max(var(--page-gutter), env(safe-area-inset-right)) 8px max(var(--page-gutter), env(safe-area-inset-left));
+      background: rgba(247, 249, 245, 0.94);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(23, 33, 43, 0.08);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .app-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-size: clamp(1rem, 3.7vw, 1.15rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+
+    .app-title i {
+      font-size: 1.1em;
+    }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1.5px solid rgba(23, 33, 43, 0.12);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .sync-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--red);
+      box-shadow: 0 0 0 4px rgba(200, 61, 49, 0.14);
+      animation: livePulse 1.25s ease-in-out infinite;
+    }
+
+    .totals-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .total-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      border-radius: 16px;
+      padding: 8px 6px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: clamp(1.02rem, 4vw, 1.28rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      box-shadow: var(--shadow-card);
+      text-align: center;
+    }
+
+    .total-card.cohort10 {
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .total-card.cohort11 {
+      background: var(--yellow);
+      color: var(--navy);
+    }
+
+    .total-card.cohort12 {
+      background: var(--red);
+      color: #ffffff;
+    }
+
+    .total-card span {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .total-card strong {
+      font-size: 1.18em;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    main {
+      flex: 1 0 auto;
+      width: min(720px, 100%);
+      margin: 0 auto;
+      padding: 12px max(var(--page-gutter), env(safe-area-inset-right)) calc(16px + var(--nav-offset)) max(var(--page-gutter), env(safe-area-inset-left));
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .section {
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .form-panel,
+    .table-panel,
+    .leaderboard-card {
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+    }
+
+    .form-panel {
+      padding: 12px;
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .place-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      grid-template-columns: 1fr;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    select,
+    input,
+    textarea {
+      width: 100%;
+      min-height: 52px;
+      border: 1.5px solid rgba(23, 33, 43, 0.18);
+      border-radius: 16px;
+      background: var(--surface-soft);
+      color: var(--ink);
+      padding: 12px 14px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      outline: none;
+      appearance: none;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+      font-weight: 700;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: rgba(200, 61, 49, 0.7);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(200, 61, 49, 0.12);
+    }
+
+    .segmented,
+    .adjustment-toggle {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .segmented {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .adjustment-toggle {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .segment-btn,
+    .type-btn {
+      min-height: 48px;
+      border: 1.5px solid rgba(23, 33, 43, 0.14);
+      border-radius: 16px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+      transition: transform 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+
+    .segment-btn.active,
+    .type-btn.active {
+      background: var(--navy);
+      color: #ffffff;
+      border-color: var(--navy);
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .cohort-box {
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      border-radius: 22px;
+      padding: 10px;
+      background: var(--surface-soft);
+      transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .cohort-box.cohort10 {
+      background: linear-gradient(180deg, var(--green-soft), #f8fbf3);
+    }
+
+    .cohort-box.cohort11 {
+      background: linear-gradient(180deg, var(--yellow-soft), #fffdf4);
+    }
+
+    .cohort-box.cohort12 {
+      background: linear-gradient(180deg, var(--red-soft), #fff7f5);
+    }
+
+    .cohort-box.cohort10.place-selected {
+      border-color: rgba(77, 107, 42, 0.42);
+      box-shadow: 0 12px 24px rgba(77, 107, 42, 0.16);
+    }
+
+    .cohort-box.cohort11.place-selected {
+      border-color: rgba(245, 197, 24, 0.42);
+      box-shadow: 0 12px 24px rgba(245, 197, 24, 0.18);
+    }
+
+    .cohort-box.cohort12.place-selected {
+      border-color: rgba(200, 61, 49, 0.36);
+      box-shadow: 0 12px 24px rgba(200, 61, 49, 0.16);
+    }
+
+    .cohort-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .cohort-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .cohort-chip.cohort10 {
+      color: var(--green);
+    }
+
+    .cohort-chip.cohort11 {
+      color: #8a6800;
+    }
+
+    .cohort-chip.cohort12 {
+      color: var(--red);
+    }
+
+    .place-select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      min-height: 0;
+      margin: -1px;
+      border: 0;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .place-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .place-btn {
+      min-height: 62px;
+      border: 1.5px solid rgba(23, 33, 43, 0.18);
+      border-radius: 18px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 1.22rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      box-shadow: inset 0 -3px 0 rgba(23, 33, 43, 0.06);
+      transition: transform 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+
+    .cohort-box.cohort10 .place-btn.selected {
+      background: var(--green);
+      border-color: var(--green);
+      color: #ffffff;
+    }
+
+    .cohort-box.cohort11 .place-btn.selected {
+      background: var(--yellow);
+      border-color: var(--yellow);
+      color: var(--navy);
+    }
+
+    .cohort-box.cohort12 .place-btn.selected {
+      background: var(--red);
+      border-color: var(--red);
+      color: #ffffff;
+    }
+
+    .place-btn:disabled {
+      opacity: 0.34;
+      cursor: not-allowed;
+    }
+
+    .submit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 58px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 18px;
+      background: var(--red);
+      color: #ffffff;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-press);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.58;
+      cursor: wait;
+    }
+
+    .status {
+      display: none;
+      margin-top: 10px;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .status.good {
+      display: block;
+      background: var(--success-bg);
+      color: var(--success-ink);
+    }
+
+    .status.bad {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger-ink);
+    }
+
+    .settings-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .settings-card {
+      padding: 12px;
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      background: var(--surface-soft);
+    }
+
+    .settings-card-header {
+      margin-bottom: 10px;
+    }
+
+    .settings-card-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .settings-card-copy {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .event-manager-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .event-row {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 18px;
+      background: #ffffff;
+    }
+
+    .event-row-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .event-action-btn,
+    .add-event-btn {
+      min-height: 48px;
+      border: 1.5px solid rgba(23, 33, 43, 0.12);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+    }
+
+    .event-action-btn:disabled {
+      opacity: 0.34;
+      cursor: not-allowed;
+    }
+
+    .add-event-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: rgba(77, 107, 42, 0.18);
+    }
+
+    .settings-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .empty-state {
+      padding: 12px;
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .breakdown-list,
+    .leaderboard {
+      display: grid;
+      gap: 10px;
+    }
+
+    .breakdown-row {
+      padding: 12px;
+      border-left: 6px solid var(--red);
+    }
+
+    .breakdown-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 1.02rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .period-tag {
+      flex: 0 0 auto;
+      min-height: 28px;
+      border-radius: 999px;
+      background: var(--yellow);
+      color: var(--navy);
+      padding: 6px 10px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .mini-scores {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .mini-score {
+      border-radius: 16px;
+      padding: 10px 8px;
+      background: var(--surface-soft);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .mini-score strong {
+      display: block;
+      margin-top: 4px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .leaderboard-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 12px;
+      color: #ffffff;
+    }
+
+    .leaderboard-card.cohort10 {
+      background: var(--green);
+    }
+
+    .leaderboard-card.cohort11 {
+      background: var(--yellow);
+      color: var(--navy);
+    }
+
+    .leaderboard-card.cohort12 {
+      background: var(--red);
+    }
+
+    .rank-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 1.5rem;
+    }
+
+    .cohort-name {
+      font-size: 1.15rem;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .rank-label {
+      margin-top: 4px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      opacity: 0.88;
+      text-transform: uppercase;
+    }
+
+    .leader-points {
+      font-size: clamp(2rem, 10vw, 2.6rem);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 8px max(var(--page-gutter), env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(var(--page-gutter), env(safe-area-inset-left));
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(23, 33, 43, 0.1);
+      box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .nav-btn {
+      min-height: 56px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+
+    .nav-btn i {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.25rem;
+    }
+
+    .nav-btn.active {
+      background: var(--navy);
+      color: #ffffff;
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    @keyframes livePulse {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 0.75;
+      }
+    }
+
+    @media (hover: hover) {
+      .segment-btn:hover,
+      .type-btn:hover,
+      .place-btn:hover,
+      .submit-btn:hover,
+      .nav-btn:hover {
+        transform: translateY(-1px);
+      }
+    }
+
+    @media (max-width: 374px) {
+      .control-grid.two,
+      .adjustment-toggle {
+        grid-template-columns: 1fr;
+      }
+
+      .totals-grid {
+        gap: 6px;
+      }
+
+      .total-card {
+        min-height: 50px;
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 699px) {
+      :root {
+        --page-gutter: 12px;
+        --nav-offset: calc(70px + env(safe-area-inset-bottom));
+      }
+
+      main {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        padding-top: 8px;
+        padding-bottom: calc(8px + var(--nav-offset));
+      }
+
+      .app-header {
+        padding-top: 8px;
+        padding-bottom: 6px;
+      }
+
+      .section {
+        margin-bottom: 8px;
+      }
+
+      .section-title {
+        margin-bottom: 6px;
+      }
+
+      .form-panel {
+        padding: 8px;
+        border-radius: 20px;
+      }
+
+      .control-grid,
+      .settings-stack,
+      .breakdown-list,
+      .leaderboard {
+        gap: 10px;
+      }
+
+      .control-grid.two {
+        gap: 8px;
+      }
+
+      .segmented,
+      .adjustment-toggle {
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .segment-btn,
+      .type-btn {
+        min-height: 44px;
+        border-radius: 14px;
+        font-size: 0.8rem;
+      }
+
+      .place-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        align-items: start;
+        margin-top: 8px;
+      }
+
+      .cohort-box {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 0;
+        padding: 8px 6px;
+        border-radius: 18px;
+      }
+
+      .cohort-heading {
+        justify-content: center;
+        margin-bottom: 6px;
+      }
+
+      .cohort-chip {
+        min-height: 24px;
+        justify-content: center;
+        width: 100%;
+        font-size: 0.74rem;
+        letter-spacing: 0.05em;
+      }
+
+      .place-buttons {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .place-btn {
+        min-height: 44px;
+        padding: 0 4px;
+        border-radius: 14px;
+        font-size: clamp(0.78rem, 3vw, 0.92rem);
+      }
+
+      .submit-btn {
+        min-height: 52px;
+        margin-top: 8px;
+      }
+
+      textarea {
+        min-height: 72px;
+      }
+
+      .breakdown-row {
+        padding: 10px;
+      }
+
+      .leaderboard-card {
+        padding: 12px 10px;
+      }
+
+      .bottom-nav {
+        gap: 6px;
+        padding-top: 6px;
+        padding-bottom: calc(6px + env(safe-area-inset-bottom));
+      }
+
+      .nav-btn {
+        min-height: 50px;
+        border-radius: 14px;
+      }
+    }
+
+    @media (min-width: 640px) {
+      body {
+        --nav-offset: calc(96px + env(safe-area-inset-bottom));
+        padding-bottom: var(--nav-offset);
+      }
+
+      .app-header {
+        padding-inline: 16px;
+      }
+
+      main {
+        padding-inline: 16px;
+      }
+
+      .place-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="title-row">
+      <div class="app-title"><i class="ti ti-scoreboard"></i><span>SJP Olympiad</span></div>
+      <div class="sync-pill"><i class="ti ti-refresh"></i><span id="syncText">Syncing</span></div>
+    </div>
+    <div class="debug-viewport hidden" id="viewportDebug" aria-hidden="true"></div>
+    <div class="totals-grid" id="totalsGrid"></div>
+  </header>
+
+  <main>
+    <section class="view active" id="entryView">
+      <div class="section">
+        <h1 class="section-title">Score Entry</h1>
+        <div class="form-panel">
+          <div class="segmented" role="group" aria-label="Period selector">
+            <button class="segment-btn active" type="button" data-period="Period 5">Period 5</button>
+            <button class="segment-btn" type="button" data-period="Period 6">Period 6</button>
+          </div>
+
+          <div class="adjustment-toggle" role="group" aria-label="Entry type">
+            <button class="type-btn active" type="button" data-type="score">Score</button>
+            <button class="type-btn" type="button" data-type="penalty">Penalty</button>
+            <button class="type-btn" type="button" data-type="bonus">Bonus</button>
+          </div>
+
+          <form id="scoreForm">
+            <div id="scoreFields">
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="eventSelect" id="eventLabel">Station</label>
+                  <select id="eventSelect" required></select>
+                </div>
+                <div id="roundWrap">
+                  <label for="roundSelect">Round</label>
+                  <select id="roundSelect" required>
+                    <option value="Round 1">Round 1</option>
+                    <option value="Round 2">Round 2</option>
+                    <option value="Round 3">Round 3</option>
+                    <option value="Round 4">Round 4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="place-grid">
+                <div class="cohort-box cohort10">
+                  <div class="cohort-heading"><span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span></div>
+                  <label class="sr-only" for="place10">Cohort 10 Place</label>
+                  <select id="place10" class="place-select" data-cohort="cohort10" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 10 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="place10">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="place10">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="place10">3rd</button>
+                  </div>
+                </div>
+                <div class="cohort-box cohort11">
+                  <div class="cohort-heading"><span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span></div>
+                  <label class="sr-only" for="place11">Cohort 11 Place</label>
+                  <select id="place11" class="place-select" data-cohort="cohort11" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 11 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="place11">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="place11">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="place11">3rd</button>
+                  </div>
+                </div>
+                <div class="cohort-box cohort12">
+                  <div class="cohort-heading"><span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span></div>
+                  <label class="sr-only" for="place12">Cohort 12 Place</label>
+                  <select id="place12" class="place-select" data-cohort="cohort12" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 12 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="place12">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="place12">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="place12">3rd</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="adjustmentFields" class="hidden">
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="adjustmentEvent">Station/Event</label>
+                  <select id="adjustmentEvent"></select>
+                </div>
+                <div>
+                  <label for="adjustmentCohort">Cohort</label>
+                  <select id="adjustmentCohort">
+                    <option value="cohort10">Cohort 10</option>
+                    <option value="cohort11">Cohort 11</option>
+                    <option value="cohort12">Cohort 12</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="adjustmentPreset">Preset</label>
+                  <select id="adjustmentPreset">
+                    <option value="">Custom points</option>
+                    <option value="1" data-type="penalty">Late penalty: -1 per student</option>
+                    <option value="5" data-type="penalty">Phone penalty: -5</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="adjustmentPoints">Point Value</label>
+                  <input id="adjustmentPoints" type="number" min="1" step="1" inputmode="numeric" placeholder="5">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+              <label for="noteInput">Note</label>
+              <textarea id="noteInput" placeholder="Optional for scores, required for adjustments"></textarea>
+            </div>
+
+            <button class="submit-btn" id="submitBtn" type="submit">
+              <i class="ti ti-send"></i>
+              <span>Submit Entry</span>
+            </button>
+            <div class="status" id="statusBox" role="status"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="breakdownView">
+      <div class="section">
+        <h1 class="section-title">Event Breakdown</h1>
+        <div class="breakdown-list" id="breakdownList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="leaderboardView">
+      <div class="section">
+        <h1 class="section-title">Leaderboard</h1>
+        <div class="leaderboard" id="leaderboardList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="settingsView">
+      <div class="section">
+        <h1 class="section-title">Settings</h1>
+        <div class="form-panel settings-stack">
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <h2 class="settings-card-title">Manage Events</h2>
+              <p class="settings-card-copy">Edit the live event lists here. Period 5 keeps rounds. Period 6 stays event-only.</p>
+            </div>
+
+            <div class="settings-stack">
+              <section class="settings-card">
+                <div class="settings-card-header">
+                  <h3 class="settings-card-title">Period 5 Rotational Field Games</h3>
+                  <p class="settings-card-copy">These appear with the Round selector during score entry.</p>
+                </div>
+                <div class="event-manager-list" id="period5EventList"></div>
+                <button class="add-event-btn" id="addPeriod5EventBtn" type="button">
+                  <i class="ti ti-plus"></i>
+                  <span>Add Period 5 Event</span>
+                </button>
+              </section>
+
+              <section class="settings-card">
+                <div class="settings-card-header">
+                  <h3 class="settings-card-title">Period 6 Cohort Competitions</h3>
+                  <p class="settings-card-copy">These appear without the Round selector.</p>
+                </div>
+                <div class="event-manager-list" id="period6EventList"></div>
+                <button class="add-event-btn" id="addPeriod6EventBtn" type="button">
+                  <i class="ti ti-plus"></i>
+                  <span>Add Period 6 Event</span>
+                </button>
+              </section>
+            </div>
+
+            <button class="submit-btn" id="saveEventsBtn" type="button">
+              <i class="ti ti-device-floppy"></i>
+              <span>Save Event List</span>
+            </button>
+            <div class="status" id="eventStatusBox" role="status"></div>
+          </div>
+
+          <div class="settings-actions">
+            <button class="submit-btn" id="openSheetBtn" type="button">
+              <i class="ti ti-table"></i>
+              <span>Open Google Sheet</span>
+            </button>
+            <button class="submit-btn" id="secretEventBtn" type="button" style="background: #7c3aed;">
+              <i class="ti ti-wand"></i>
+              <span>Secret Event</span>
+            </button>
+            <div class="status" id="sheetStatusBox" role="status"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button class="nav-btn active" type="button" data-view="entryView"><i class="ti ti-edit"></i>Entry</button>
+    <button class="nav-btn" type="button" data-view="breakdownView"><i class="ti ti-chart-bar"></i>Breakdown</button>
+    <button class="nav-btn" type="button" data-view="leaderboardView"><i class="ti ti-trophy"></i>Leaders</button>
+    <button class="nav-btn" type="button" data-view="settingsView"><i class="ti ti-settings"></i>Settings</button>
+  </nav>
+
+  <script>
+    const cohorts = [
+      { key: 'cohort10', label: 'Cohort 10', shortLabel: '10', className: 'cohort10', icon: 'ti-shield' },
+      { key: 'cohort11', label: 'Cohort 11', shortLabel: '11', className: 'cohort11', icon: 'ti-sun' },
+      { key: 'cohort12', label: 'Cohort 12', shortLabel: '12', className: 'cohort12', icon: 'ti-flame' },
+    ];
+    const roundOptions = ['Round 1', 'Round 2', 'Round 3', 'Round 4'];
+    const rankIcons = ['ti-trophy', 'ti-medal-2', 'ti-medal'];
+    let activePeriod = 'Period 5';
+    let activeType = 'score';
+    let latestData = null;
+    let loadedEventConfig = { period5: [], period6: [] };
+    let eventEditorState = { period5: [], period6: [] };
+    let eventEditorDirty = false;
+    let savingEventConfig = false;
+
+    const totalsGrid = document.getElementById('totalsGrid');
+    const syncText = document.getElementById('syncText');
+    const viewportDebug = document.getElementById('viewportDebug');
+    const scoreForm = document.getElementById('scoreForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusBox = document.getElementById('statusBox');
+    const eventSelect = document.getElementById('eventSelect');
+    const eventLabel = document.getElementById('eventLabel');
+    const roundWrap = document.getElementById('roundWrap');
+    const scoreFields = document.getElementById('scoreFields');
+    const adjustmentFields = document.getElementById('adjustmentFields');
+    const adjustmentEvent = document.getElementById('adjustmentEvent');
+    const adjustmentPreset = document.getElementById('adjustmentPreset');
+    const adjustmentPoints = document.getElementById('adjustmentPoints');
+    const noteInput = document.getElementById('noteInput');
+    const breakdownList = document.getElementById('breakdownList');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const openSheetBtn = document.getElementById('openSheetBtn');
+    const secretEventBtn = document.getElementById('secretEventBtn');
+    const sheetStatusBox = document.getElementById('sheetStatusBox');
+    const period5EventList = document.getElementById('period5EventList');
+    const period6EventList = document.getElementById('period6EventList');
+    const addPeriod5EventBtn = document.getElementById('addPeriod5EventBtn');
+    const addPeriod6EventBtn = document.getElementById('addPeriod6EventBtn');
+    const saveEventsBtn = document.getElementById('saveEventsBtn');
+    const eventStatusBox = document.getElementById('eventStatusBox');
+    const roundSelect = document.getElementById('roundSelect');
+
+    function serverRun(functionName, payload) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)[functionName](payload);
+      });
+    }
+
+    function updateViewportDebug() {
+      if (!viewportDebug) {
+        return;
+      }
+
+      const width = window.innerWidth;
+      const clientWidth = document.documentElement.clientWidth;
+      viewportDebug.textContent = `hidden debug ${width} / ${clientWidth}`;
+    }
+
+    function renderTotals(totals) {
+      const byKey = Object.fromEntries((totals.cohorts || []).map(item => [item.key, item]));
+      totalsGrid.innerHTML = cohorts.map(cohort => {
+        const total = byKey[cohort.key]?.total || 0;
+        return `
+          <div class="total-card ${cohort.className}">
+            <span>C${cohort.shortLabel} <strong>${total}</strong></span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBreakdown(rows) {
+      breakdownList.innerHTML = rows.map(row => `
+        <article class="form-panel breakdown-row">
+          <div class="breakdown-name">
+            <span>${escapeHtml(row.eventName)}</span>
+            <span class="period-tag">${escapeHtml(row.period)}</span>
+          </div>
+          <div class="mini-scores">
+            <div class="mini-score">C10<strong>${row.cohort10}</strong></div>
+            <div class="mini-score">C11<strong>${row.cohort11}</strong></div>
+            <div class="mini-score">C12<strong>${row.cohort12}</strong></div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function renderLeaderboard(totals) {
+      const ranked = [...(totals.cohorts || [])].sort((a, b) => b.total - a.total);
+      leaderboardList.innerHTML = ranked.map((cohort, index) => {
+        const config = cohorts.find(item => item.key === cohort.key);
+        const rankLabel = ['1st Place', '2nd Place', '3rd Place'][index];
+        return `
+          <article class="leaderboard-card ${config.className}">
+            <div class="rank-icon"><i class="ti ${rankIcons[index]}"></i></div>
+            <div>
+              <div class="cohort-name">${config.label}</div>
+              <div class="rank-label">${rankLabel}</div>
+            </div>
+            <div class="leader-points">${cohort.total}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function hydrate(data) {
+      latestData = data;
+      renderTotals(data.totals);
+      renderBreakdown(data.breakdown);
+      renderLeaderboard(data.totals);
+      applyLoadedEventConfig(data.events);
+      if (!eventEditorDirty && !savingEventConfig) {
+        setEventEditorState(data.events);
+      }
+      syncText.textContent = 'Live';
+    }
+
+    async function refreshData() {
+      try {
+        const data = await serverRun('getAppData');
+        hydrate(data);
+      } catch (error) {
+        syncText.textContent = 'Offline';
+      }
+    }
+
+    function populateEventSelects() {
+      const period5Events = loadedEventConfig.period5 || [];
+      const period6Events = loadedEventConfig.period6 || [];
+      const events = activePeriod === 'Period 5' ? period5Events : period6Events;
+      const allEvents = [...period5Events, ...period6Events];
+
+      if (!allEvents.length) {
+        eventSelect.innerHTML = '<option value="">Event list unavailable</option>';
+        adjustmentEvent.innerHTML = '<option value="">Event list unavailable</option>';
+        submitBtn.disabled = true;
+        showStatus('Event list could not be loaded. Please try again or check Settings.', false);
+        return;
+      }
+
+      submitBtn.disabled = false;
+      if (statusBox.textContent === 'Event list could not be loaded. Please try again or check Settings.') {
+        statusBox.className = 'status';
+        statusBox.textContent = '';
+      }
+
+      eventSelect.innerHTML = events.map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`).join('');
+      eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
+      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
+      roundSelect.required = activePeriod === 'Period 5';
+
+      adjustmentEvent.innerHTML = allEvents
+        .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
+        .join('');
+    }
+
+    function setEntryType(type) {
+      activeType = type;
+      document.querySelectorAll('.type-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.type === type);
+      });
+      scoreFields.classList.toggle('hidden', type !== 'score');
+      adjustmentFields.classList.toggle('hidden', type === 'score');
+      noteInput.required = type !== 'score';
+      adjustmentPoints.required = type !== 'score';
+    }
+
+    function updatePlaceOptions() {
+      const selected = [...document.querySelectorAll('.place-select')]
+        .map(select => select.value)
+        .filter(Boolean);
+
+      document.querySelectorAll('.place-select').forEach(select => {
+        [...select.options].forEach(option => {
+          option.disabled = option.value && option.value !== select.value && selected.includes(option.value);
+        });
+        select.closest('.cohort-box').classList.toggle('place-selected', Boolean(select.value));
+      });
+
+      document.querySelectorAll('.place-btn').forEach(button => {
+        const select = document.getElementById(button.dataset.target);
+        const isSelected = select.value === button.dataset.place;
+        button.classList.toggle('selected', isSelected);
+        button.disabled = !isSelected && selected.includes(button.dataset.place);
+      });
+    }
+
+    function showStatus(message, good) {
+      statusBox.textContent = message;
+      statusBox.className = `status ${good ? 'good' : 'bad'}`;
+    }
+
+    function clearFormAfterSubmit() {
+      document.querySelectorAll('.place-select').forEach(select => {
+        select.value = '';
+      });
+      adjustmentPoints.value = '';
+      adjustmentPreset.value = '';
+      noteInput.value = '';
+      updatePlaceOptions();
+    }
+
+    function handlePlaceButtonClick(event) {
+      const button = event.currentTarget;
+      const select = document.getElementById(button.dataset.target);
+      select.value = select.value === button.dataset.place ? '' : button.dataset.place;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function buildPayload() {
+      if (activeType === 'score') {
+        return {
+          type: 'score',
+          period: activePeriod,
+          eventName: eventSelect.value,
+          round: activePeriod === 'Period 5' ? document.getElementById('roundSelect').value : '',
+          places: {
+            cohort10: document.getElementById('place10').value,
+            cohort11: document.getElementById('place11').value,
+            cohort12: document.getElementById('place12').value,
+          },
+          note: noteInput.value,
+        };
+      }
+
+      return {
+        type: activeType,
+        period: (loadedEventConfig.period5 || []).includes(adjustmentEvent.value) ? 'Period 5' : 'Period 6',
+        eventName: adjustmentEvent.value,
+        cohortKey: document.getElementById('adjustmentCohort').value,
+        points: Number(adjustmentPoints.value),
+        note: noteInput.value,
+      };
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      submitBtn.disabled = true;
+      statusBox.className = 'status';
+
+      try {
+        const result = await serverRun('logScore', buildPayload());
+        hydrate({
+          totals: result.totals,
+          breakdown: result.breakdown,
+          events: loadedEventConfig,
+        });
+        clearFormAfterSubmit();
+        showStatus('Saved. Running totals updated.', true);
+      } catch (error) {
+        showStatus(error.message || 'Could not save this entry.', false);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function cloneEvents(events) {
+      return {
+        period5: Array.isArray(events && events.period5) ? [...events.period5] : [],
+        period6: Array.isArray(events && events.period6) ? [...events.period6] : [],
+      };
+    }
+
+    function applyLoadedEventConfig(events) {
+      loadedEventConfig = cloneEvents(events);
+      populateEventSelects();
+    }
+
+    function setEventEditorState(events) {
+      eventEditorState = cloneEvents(events);
+      eventEditorDirty = false;
+      renderEventEditor();
+    }
+
+    function renderEventEditor() {
+      renderEventRows(period5EventList, eventEditorState.period5, 'period5');
+      renderEventRows(period6EventList, eventEditorState.period6, 'period6');
+    }
+
+    function renderEventRows(container, events, periodKey) {
+      if (!events.length) {
+        container.innerHTML = '<div class="empty-state">No events yet. Add one below.</div>';
+        return;
+      }
+
+      container.innerHTML = events.map((eventName, index) => `
+        <div class="event-row" data-period-key="${periodKey}" data-index="${index}">
+          <input
+            type="text"
+            value="${escapeAttribute(eventName)}"
+            data-role="event-name"
+            data-period-key="${periodKey}"
+            data-index="${index}"
+            placeholder="Event name"
+          >
+          <div class="event-row-controls">
+            <button class="event-action-btn" type="button" data-action="up" data-period-key="${periodKey}" data-index="${index}" ${index === 0 ? 'disabled' : ''}>Up</button>
+            <button class="event-action-btn" type="button" data-action="down" data-period-key="${periodKey}" data-index="${index}" ${index === events.length - 1 ? 'disabled' : ''}>Down</button>
+            <button class="event-action-btn" type="button" data-action="delete" data-period-key="${periodKey}" data-index="${index}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function markEventEditorDirty() {
+      eventEditorDirty = true;
+      if (eventStatusBox.className !== 'status') {
+        eventStatusBox.className = 'status';
+        eventStatusBox.textContent = '';
+      }
+    }
+
+    function mutateEventList(periodKey, mutator) {
+      const next = cloneEvents(eventEditorState);
+      mutator(next[periodKey]);
+      eventEditorState = next;
+      markEventEditorDirty();
+      renderEventEditor();
+    }
+
+    function addEventRow(periodKey) {
+      mutateEventList(periodKey, list => {
+        list.push('');
+      });
+    }
+
+    function moveEvent(periodKey, index, direction) {
+      mutateEventList(periodKey, list => {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= list.length) {
+          return;
+        }
+
+        const currentValue = list[index];
+        list[index] = list[targetIndex];
+        list[targetIndex] = currentValue;
+      });
+    }
+
+    function deleteEvent(periodKey, index) {
+      mutateEventList(periodKey, list => {
+        list.splice(index, 1);
+      });
+    }
+
+    function updateEventName(periodKey, index, value) {
+      const next = cloneEvents(eventEditorState);
+      next[periodKey][index] = value;
+      eventEditorState = next;
+      markEventEditorDirty();
+    }
+
+    function validateEventEditorState() {
+      const period5 = eventEditorState.period5.map(name => name.trim());
+      const period6 = eventEditorState.period6.map(name => name.trim());
+      const allEvents = [...period5, ...period6];
+
+      if (!period5.length) {
+        throw new Error('Add at least one Period 5 event before saving.');
+      }
+
+      if (!period6.length) {
+        throw new Error('Add at least one Period 6 event before saving.');
+      }
+
+      if (allEvents.some(name => !name)) {
+        throw new Error('Event names cannot be blank.');
+      }
+
+      const seen = new Set();
+      for (const name of allEvents) {
+        const key = name.toLowerCase();
+        if (seen.has(key)) {
+          throw new Error('Event names must be unique.');
+        }
+        seen.add(key);
+      }
+
+      return { period5, period6 };
+    }
+
+    async function handleSaveEvents() {
+      eventStatusBox.className = 'status';
+      saveEventsBtn.disabled = true;
+
+      try {
+        const payload = validateEventEditorState();
+        savingEventConfig = true;
+        const result = await serverRun('saveEventConfig', payload);
+        hydrate(result);
+        eventStatusBox.textContent = result.message || 'Event list saved.';
+        eventStatusBox.className = 'status good';
+      } catch (error) {
+        eventStatusBox.textContent = error.message || 'Could not save the event list.';
+        eventStatusBox.className = 'status bad';
+      } finally {
+        savingEventConfig = false;
+        saveEventsBtn.disabled = false;
+      }
+    }
+
+    async function handleOpenSheet() {
+      openSheetBtn.disabled = true;
+      sheetStatusBox.className = 'status';
+
+      try {
+        const url = await serverRun('getSpreadsheetUrl');
+        window.open(url, '_blank');
+      } catch (error) {
+        sheetStatusBox.textContent = error.message || 'Could not open the Google Sheet.';
+        sheetStatusBox.className = 'status bad';
+      } finally {
+        openSheetBtn.disabled = false;
+      }
+    }
+
+    function triggerSecretEvent() {
+      if (!confirm('Are you sure? This is dark magic.')) {
+        return;
+      }
+
+      alert('Ok you degenerate.');
+
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes secretHotDogFall {
+          from { transform: translateY(-80px) rotate(0deg); opacity: 1; }
+          to { transform: translateY(calc(100vh + 90px)) rotate(360deg); opacity: 0.95; }
+        }
+
+        @keyframes secretHotDogRise {
+          0% { transform: translate(-50%, 120vh) rotate(-16deg); opacity: 1; }
+          82% { transform: translate(-50%, -120vh) rotate(16deg); opacity: 1; }
+          100% { transform: translate(-50%, -130vh) rotate(20deg); opacity: 0; }
+        }
+      `;
+
+      const overlay = document.createElement('div');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.zIndex = '9999';
+      overlay.style.overflow = 'hidden';
+      overlay.style.background = '#000000';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 400ms ease';
+      overlay.style.pointerEvents = 'none';
+
+      for (let index = 0; index < 30; index += 1) {
+        const hotDog = document.createElement('div');
+        hotDog.textContent = '🌭';
+        hotDog.style.position = 'absolute';
+        hotDog.style.top = '-80px';
+        hotDog.style.left = `${Math.random() * 100}%`;
+        hotDog.style.fontSize = `${28 + Math.random() * 24}px`;
+        hotDog.style.animationName = 'secretHotDogFall';
+        hotDog.style.animationDelay = `${Math.random() * 2000}ms`;
+        hotDog.style.animationDuration = `${1500 + Math.random() * 1000}ms`;
+        hotDog.style.animationTimingFunction = 'linear';
+        hotDog.style.animationFillMode = 'forwards';
+        overlay.appendChild(hotDog);
+      }
+
+      const giantHotDog = document.createElement('div');
+      giantHotDog.textContent = '🌭';
+      giantHotDog.style.position = 'absolute';
+      giantHotDog.style.left = '50%';
+      giantHotDog.style.bottom = '0';
+      giantHotDog.style.fontSize = '120px';
+      giantHotDog.style.lineHeight = '1';
+      giantHotDog.style.animation = 'secretHotDogRise 2500ms ease-in forwards';
+      overlay.appendChild(giantHotDog);
+
+      document.head.appendChild(style);
+      document.body.appendChild(overlay);
+
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '0.92';
+      });
+
+      window.setTimeout(() => {
+        overlay.style.transition = 'opacity 500ms ease';
+        overlay.style.opacity = '0';
+      }, 4000);
+
+      window.setTimeout(() => {
+        overlay.remove();
+        style.remove();
+      }, 4500);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[character]));
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value);
+    }
+
+    document.querySelectorAll('.segment-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        activePeriod = button.dataset.period;
+        document.querySelectorAll('.segment-btn').forEach(item => {
+          item.classList.toggle('active', item === button);
+        });
+        populateEventSelects();
+      });
+    });
+
+    document.querySelectorAll('.type-btn').forEach(button => {
+      button.addEventListener('click', () => setEntryType(button.dataset.type));
+    });
+
+    document.querySelectorAll('.place-select').forEach(select => {
+      select.addEventListener('change', updatePlaceOptions);
+    });
+
+    document.querySelectorAll('.place-btn').forEach(button => {
+      button.addEventListener('click', handlePlaceButtonClick);
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(item => item.classList.toggle('active', item === button));
+        document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === button.dataset.view));
+      });
+    });
+
+    adjustmentPreset.addEventListener('change', () => {
+      if (adjustmentPreset.value) {
+        adjustmentPoints.value = adjustmentPreset.value;
+        if (adjustmentPreset.selectedOptions[0].dataset.type === 'penalty') {
+          setEntryType('penalty');
+        }
+      }
+    });
+
+    [period5EventList, period6EventList].forEach(container => {
+      container.addEventListener('click', event => {
+        const button = event.target.closest('[data-action]');
+        if (!button) {
+          return;
+        }
+
+        const periodKey = button.dataset.periodKey;
+        const index = Number(button.dataset.index);
+
+        if (button.dataset.action === 'up') {
+          moveEvent(periodKey, index, -1);
+        }
+
+        if (button.dataset.action === 'down') {
+          moveEvent(periodKey, index, 1);
+        }
+
+        if (button.dataset.action === 'delete') {
+          deleteEvent(periodKey, index);
+        }
+      });
+
+      container.addEventListener('input', event => {
+        if (event.target.dataset.role !== 'event-name') {
+          return;
+        }
+
+        updateEventName(event.target.dataset.periodKey, Number(event.target.dataset.index), event.target.value);
+      });
+    });
+
+    scoreForm.addEventListener('submit', handleSubmit);
+    openSheetBtn.addEventListener('click', handleOpenSheet);
+    secretEventBtn.addEventListener('click', triggerSecretEvent);
+    addPeriod5EventBtn.addEventListener('click', () => addEventRow('period5'));
+    addPeriod6EventBtn.addEventListener('click', () => addEventRow('period6'));
+    saveEventsBtn.addEventListener('click', handleSaveEvents);
+    window.addEventListener('resize', updateViewportDebug);
+    window.addEventListener('orientationchange', updateViewportDebug);
+
+    roundSelect.innerHTML = roundOptions
+      .map(option => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
+      .join('');
+
+    renderEventEditor();
+    populateEventSelects();
+    setEntryType('score');
+    updatePlaceOptions();
+    updateViewportDebug();
+    refreshData();
+    setInterval(refreshData, 5000);
+  </script>
+</body>
+</html>
 
