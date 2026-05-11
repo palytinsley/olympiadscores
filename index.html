@@ -1196,6 +1196,7 @@
   </nav>
 
   <script>
+    const API_URL = 'PASTE_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE';
     const cohorts = [
       { key: 'cohort10', label: 'Cohort 10', shortLabel: '10', className: 'cohort10', icon: 'ti-shield' },
       { key: 'cohort11', label: 'Cohort 11', shortLabel: '11', className: 'cohort11', icon: 'ti-sun' },
@@ -1239,12 +1240,58 @@
     const eventStatusBox = document.getElementById('eventStatusBox');
     const roundSelect = document.getElementById('roundSelect');
 
-    function serverRun(functionName, payload) {
-      return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)[functionName](payload);
-      });
+    function isApiUrlConfigured() {
+      return API_URL && !API_URL.includes('PASTE_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE');
+    }
+
+    function getErrorMessage(error, fallbackMessage) {
+      if (error && error.message) {
+        return error.message;
+      }
+      return fallbackMessage;
+    }
+
+    function setSyncMessage(message) {
+      syncText.textContent = message;
+    }
+
+    async function serverRun(functionName, payload = {}) {
+      if (!isApiUrlConfigured()) {
+        throw new Error('API URL is not configured.');
+      }
+
+      let response;
+      try {
+        response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify({
+            action: functionName,
+            payload,
+          }),
+        });
+      } catch (error) {
+        throw new Error('Could not reach Google backend.');
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error('Google backend returned invalid JSON.');
+      }
+
+      if (!response.ok) {
+        throw new Error(data && data.error ? data.error : 'Could not reach Google backend.');
+      }
+
+      if (!data || data.ok !== true) {
+        throw new Error(data && data.error ? data.error : 'Google backend returned an error.');
+      }
+
+      return data.result;
     }
 
     function updateViewportDebug() {
@@ -1312,7 +1359,7 @@
       if (!eventEditorDirty && !savingEventConfig) {
         setEventEditorState(data.events);
       }
-      syncText.textContent = 'Live';
+      setSyncMessage('Live');
     }
 
     async function refreshData() {
@@ -1320,7 +1367,7 @@
         const data = await serverRun('getAppData');
         hydrate(data);
       } catch (error) {
-        syncText.textContent = 'Offline';
+        setSyncMessage(getErrorMessage(error, 'Could not reach Google backend.'));
       }
     }
 
@@ -1443,12 +1490,12 @@
         hydrate({
           totals: result.totals,
           breakdown: result.breakdown,
-          events: loadedEventConfig,
+          events: result.events || loadedEventConfig,
         });
         clearFormAfterSubmit();
         showStatus('Saved. Running totals updated.', true);
       } catch (error) {
-        showStatus(error.message || 'Could not save this entry.', false);
+        showStatus(getErrorMessage(error, 'Could not save this entry.'), false);
       } finally {
         submitBtn.disabled = false;
       }
@@ -1591,7 +1638,7 @@
         eventStatusBox.textContent = result.message || 'Event list saved.';
         eventStatusBox.className = 'status good';
       } catch (error) {
-        eventStatusBox.textContent = error.message || 'Could not save the event list.';
+        eventStatusBox.textContent = getErrorMessage(error, 'Could not save the event list.');
         eventStatusBox.className = 'status bad';
       } finally {
         savingEventConfig = false;
@@ -1607,7 +1654,7 @@
         const url = await serverRun('getSpreadsheetUrl');
         window.open(url, '_blank');
       } catch (error) {
-        sheetStatusBox.textContent = error.message || 'Could not open the Google Sheet.';
+        sheetStatusBox.textContent = getErrorMessage(error, 'Could not open the Google Sheet.');
         sheetStatusBox.className = 'status bad';
       } finally {
         openSheetBtn.disabled = false;
@@ -1796,4 +1843,3 @@
   </script>
 </body>
 </html>
-
