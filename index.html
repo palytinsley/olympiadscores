@@ -790,6 +790,11 @@
       gap: 10px;
     }
 
+    .submit-btn.danger-btn {
+      background: var(--red);
+      color: #ffffff;
+    }
+
     .empty-state {
       padding: 12px;
       border-radius: 16px;
@@ -1571,6 +1576,10 @@
               <i class="ti ti-table"></i>
               <span>Open Google Sheet</span>
             </button>
+            <button class="submit-btn danger-btn" id="resetScoresBtn" type="button">
+              <i class="ti ti-eraser"></i>
+              <span>Reset All Scores</span>
+            </button>
             <button class="submit-btn" id="secretEventBtn" type="button" style="background: #7c3aed;">
               <i class="ti ti-wand"></i>
               <span>Secret Event</span>
@@ -1623,6 +1632,13 @@
     let stickySaveState = 'idle';
     let stickySaveMessage = 'Choose placements, then save manually.';
     let savedStateExpanded = false;
+    let suppressScoreSelectionGuard = false;
+    let confirmedSavedEditKey = '';
+    let selectionState = {
+      period: 'Period 5',
+      eventName: '',
+      round: roundOptions[0],
+    };
     const expandedBreakdownEvents = new Set();
     const placeFieldIds = {
       cohort10: 'place10',
@@ -1648,6 +1664,7 @@
     const breakdownList = document.getElementById('breakdownList');
     const leaderboardList = document.getElementById('leaderboardList');
     const openSheetBtn = document.getElementById('openSheetBtn');
+    const resetScoresBtn = document.getElementById('resetScoresBtn');
     const secretEventBtn = document.getElementById('secretEventBtn');
     const sheetStatusBox = document.getElementById('sheetStatusBox');
     const period5EventList = document.getElementById('period5EventList');
@@ -1923,6 +1940,130 @@
       }
 
       syncScoreFormWithSelection();
+    }
+
+    function updatePeriodButtons() {
+      document.querySelectorAll('.segment-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.period === activePeriod);
+      });
+    }
+
+    function getCurrentScoreSelection() {
+      return {
+        period: activePeriod,
+        eventName: eventSelect.value || '',
+        round: roundSelect.value || roundOptions[0],
+      };
+    }
+
+    function isSameScoreSelection(left, right) {
+      const leftSelection = left || {};
+      const rightSelection = right || {};
+      return leftSelection.period === rightSelection.period
+        && leftSelection.eventName === rightSelection.eventName
+        && (leftSelection.period !== 'Period 5' || leftSelection.round === rightSelection.round);
+    }
+
+    function getEventListForPeriod(period) {
+      return period === 'Period 5'
+        ? (loadedEventConfig.period5 || [])
+        : (loadedEventConfig.period6 || []);
+    }
+
+    function normalizeScoreSelection(selection) {
+      const period = selection && selection.period === 'Period 6' ? 'Period 6' : 'Period 5';
+      const events = getEventListForPeriod(period);
+      const fallbackEvent = events[0] || '';
+      const requestedEvent = selection && selection.eventName ? selection.eventName : fallbackEvent;
+      return {
+        period,
+        eventName: events.includes(requestedEvent) ? requestedEvent : fallbackEvent,
+        round: roundOptions.includes(selection && selection.round) ? selection.round : roundOptions[0],
+      };
+    }
+
+    function restoreScoreSelection(selection, options = {}) {
+      const {
+        preserveForm = true,
+        syncForm = false,
+      } = options;
+      const nextSelection = normalizeScoreSelection(selection);
+
+      suppressScoreSelectionGuard = true;
+      activePeriod = nextSelection.period;
+      updatePeriodButtons();
+      populateEventSelects({ preserveForm: true });
+
+      if (nextSelection.eventName && getEventListForPeriod(nextSelection.period).includes(nextSelection.eventName)) {
+        eventSelect.value = nextSelection.eventName;
+      }
+      roundSelect.value = nextSelection.round;
+      suppressScoreSelectionGuard = false;
+
+      if (syncForm) {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+        return;
+      }
+
+      if (preserveForm) {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+      }
+    }
+
+    function getSavedStateKeyForSelection(selection) {
+      const normalized = normalizeScoreSelection(selection);
+      const savedState = normalized.period === 'Period 5'
+        ? getSavedRoundState((getCurrentEntryState().period5[normalized.eventName] || { savedRounds: {} }), normalized.round)
+        : (() => {
+          const eventState = getCurrentEntryState().period6[normalized.eventName];
+          return eventState && eventState.saved ? eventState : createBlankScoreState();
+        })();
+
+      if (!savedState.saved || !normalized.eventName) {
+        return '';
+      }
+
+      return [
+        normalized.period,
+        normalized.eventName,
+        normalized.period === 'Period 5' ? normalized.round : '',
+      ].join('::');
+    }
+
+    function scorePlacementsMatchForm(scoreState) {
+      return Object.entries(placeFieldIds).every(([cohortKey, fieldId]) => {
+        return document.getElementById(fieldId).value === (scoreState.places[cohortKey] || '');
+      });
+    }
+
+    function maybeConfirmDiscardChanges() {
+      if (activeType !== 'score' || !formDirty) {
+        return true;
+      }
+
+      if (window.confirm('You have unsaved changes for this round. Switching will discard them. Continue?')) {
+        return true;
+      }
+
+      restoreScoreSelection(selectionState, { preserveForm: true });
+      return false;
+    }
+
+    function attemptScoreSelectionChange(nextSelection) {
+      const normalizedSelection = normalizeScoreSelection(nextSelection);
+      if (isSameScoreSelection(selectionState, normalizedSelection)) {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+        return;
+      }
+
+      if (!maybeConfirmDiscardChanges()) {
+        return;
+      }
+
+      confirmedSavedEditKey = '';
+      restoreScoreSelection(normalizedSelection, { syncForm: true });
     }
 
     function setEntryType(type) {
@@ -2335,6 +2476,8 @@
 
       applyScoreStateToForm(getSelectedScoreState());
       formDirty = false;
+      selectionState = getCurrentScoreSelection();
+      confirmedSavedEditKey = '';
       stickySaveState = 'idle';
       stickySaveMessage = 'Choose placements, then save manually.';
       renderSavedStatePanel();
@@ -2508,6 +2651,44 @@
       updateStickySaveBar();
     }
 
+    async function handleResetAllScores() {
+      const typedValue = window.prompt('Type RESET to clear all scores, penalties, bonuses, notes, and round results.');
+      if (typedValue === null) {
+        return;
+      }
+
+      if (typedValue !== 'RESET') {
+        sheetStatusBox.textContent = 'Reset cancelled. Type RESET exactly to continue.';
+        sheetStatusBox.className = 'status bad';
+        return;
+      }
+
+      resetScoresBtn.disabled = true;
+      sheetStatusBox.className = 'status';
+
+      try {
+        const result = await serverRun('resetAllScores');
+        hydrate(result);
+        if (activeType === 'score') {
+          syncScoreFormWithSelection({ preserveExpandedState: true });
+        } else {
+          formDirty = false;
+          clearAdjustmentFormAfterSubmit();
+          renderSavedStatePanel();
+          updateStickySaveBar();
+        }
+        sheetStatusBox.textContent = 'All scores reset. Event lists and settings were preserved.';
+        sheetStatusBox.className = 'status good';
+        statusBox.className = 'status';
+        statusBox.textContent = '';
+      } catch (error) {
+        sheetStatusBox.textContent = getErrorMessage(error, 'Could not reset scores.');
+        sheetStatusBox.className = 'status bad';
+      } finally {
+        resetScoresBtn.disabled = false;
+      }
+    }
+
     function getWinnerLabel(entry) {
       const winners = Array.isArray(entry.winners) ? entry.winners : [];
       return winners.length ? `${winners.join(', ')} won` : 'Scored';
@@ -2541,11 +2722,15 @@
 
     document.querySelectorAll('.segment-btn').forEach(button => {
       button.addEventListener('click', () => {
-        activePeriod = button.dataset.period;
-        document.querySelectorAll('.segment-btn').forEach(item => {
-          item.classList.toggle('active', item === button);
+        if (button.dataset.period === activePeriod) {
+          return;
+        }
+
+        attemptScoreSelectionChange({
+          period: button.dataset.period,
+          eventName: '',
+          round: roundSelect.value,
         });
-        populateEventSelects();
       });
     });
 
@@ -2555,6 +2740,21 @@
 
     document.querySelectorAll('.place-select').forEach(select => {
       select.addEventListener('change', () => {
+        const savedState = getSelectedScoreState();
+        const savedStateKey = getSavedStateKeyForSelection(getCurrentScoreSelection());
+
+        if (savedState.saved && savedStateKey && confirmedSavedEditKey !== savedStateKey && !scorePlacementsMatchForm(savedState)) {
+          const confirmed = window.confirm('You are changing the scores for this round. Are you sure?');
+          if (!confirmed) {
+            applyScoreStateToForm(savedState);
+            formDirty = false;
+            renderSavedStatePanel();
+            updateStickySaveBar();
+            return;
+          }
+          confirmedSavedEditKey = savedStateKey;
+        }
+
         updatePlaceOptions();
         markFormDirtyAndRefresh();
       });
@@ -2572,9 +2772,21 @@
       });
     });
 
-    eventSelect.addEventListener('change', updateStickySaveBar);
-    eventSelect.addEventListener('change', () => syncScoreFormWithSelection());
-    roundSelect.addEventListener('change', () => syncScoreFormWithSelection());
+    eventSelect.addEventListener('change', () => {
+      if (suppressScoreSelectionGuard || activeType !== 'score') {
+        updateStickySaveBar();
+        return;
+      }
+
+      attemptScoreSelectionChange(getCurrentScoreSelection());
+    });
+    roundSelect.addEventListener('change', () => {
+      if (suppressScoreSelectionGuard || activeType !== 'score') {
+        return;
+      }
+
+      attemptScoreSelectionChange(getCurrentScoreSelection());
+    });
     noteInput.addEventListener('input', markFormDirtyAndRefresh);
     adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
@@ -2606,7 +2818,12 @@
 
       roundSelect.value = roundButton.dataset.roundJump;
       savedStateExpanded = false;
-      syncScoreFormWithSelection({ preserveExpandedState: true });
+      if (suppressScoreSelectionGuard || activeType !== 'score') {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+        return;
+      }
+
+      attemptScoreSelectionChange(getCurrentScoreSelection());
     });
 
     breakdownList.addEventListener('click', event => {
@@ -2658,6 +2875,7 @@
 
     scoreForm.addEventListener('submit', handleSubmit);
     openSheetBtn.addEventListener('click', handleOpenSheet);
+    resetScoresBtn.addEventListener('click', handleResetAllScores);
     secretEventBtn.addEventListener('click', triggerSecretEvent);
     addPeriod5EventBtn.addEventListener('click', () => addEventRow('period5'));
     addPeriod6EventBtn.addEventListener('click', () => addEventRow('period6'));
@@ -2672,6 +2890,7 @@
 
     renderEventEditor();
     populateEventSelects();
+    updatePeriodButtons();
     setEntryType('score');
     updatePlaceOptions();
     updateLayoutMetrics();
