@@ -520,28 +520,63 @@
 
     .saved-state-panel {
       display: grid;
-      gap: 10px;
+      gap: 8px;
       margin-top: 12px;
-      padding: 12px;
-      border: 1px solid rgba(23, 33, 43, 0.1);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #f8faf6 100%);
     }
 
-    .saved-state-header {
+    .saved-state-toggle {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8faf6 100%);
+      text-align: left;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.04);
     }
 
-    .saved-state-title {
+    .saved-state-toggle-copy {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .saved-state-kicker {
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 0.76rem;
+      font-size: 0.68rem;
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
+    }
+
+    .saved-state-summary {
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .saved-state-detail {
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.74rem;
+      font-weight: 700;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .saved-state-toggle-side {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
 
     .saved-state-pill {
@@ -555,7 +590,7 @@
       background: #ffffff;
       color: var(--muted);
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.03em;
       white-space: nowrap;
@@ -565,6 +600,22 @@
       border-color: rgba(77, 107, 42, 0.24);
       background: var(--green-soft);
       color: var(--green);
+    }
+
+    .saved-state-chevron {
+      font-size: 1rem;
+      color: var(--muted);
+      transition: transform 180ms ease;
+    }
+
+    .saved-state-panel.expanded .saved-state-chevron {
+      transform: rotate(180deg);
+    }
+
+    .saved-state-body {
+      display: grid;
+      gap: 8px;
+      padding: 2px 2px 0;
     }
 
     .round-status-grid {
@@ -617,6 +668,18 @@
 
     .round-status-btn.saved .round-status-meta {
       color: var(--green);
+    }
+
+    .saved-state-note {
+      padding: 10px 12px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
     }
 
     .status {
@@ -1242,7 +1305,6 @@
 
       .saved-state-panel {
         margin-top: 10px;
-        padding: 10px;
       }
 
       .round-status-grid,
@@ -1560,7 +1622,13 @@
     let formDirty = false;
     let stickySaveState = 'idle';
     let stickySaveMessage = 'Choose placements, then save manually.';
+    let savedStateExpanded = false;
     const expandedBreakdownEvents = new Set();
+    const placeFieldIds = {
+      cohort10: 'place10',
+      cohort11: 'place11',
+      cohort12: 'place12',
+    };
 
     const totalsGrid = document.getElementById('totalsGrid');
     const syncText = document.getElementById('syncText');
@@ -1777,8 +1845,12 @@
       if (!eventEditorDirty && !savingEventConfig) {
         setEventEditorState(latestData.events);
       }
-      renderSavedStatePanel();
-      updateStickySaveBar();
+      if (activeType === 'score' && !formDirty) {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+      } else {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+      }
       setSyncMessage('Live');
     }
 
@@ -1838,8 +1910,7 @@
       eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
       roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
       roundSelect.required = activePeriod === 'Period 5';
-      renderSavedStatePanel();
-      updateStickySaveBar();
+      syncScoreFormWithSelection();
     }
 
     function setEntryType(type) {
@@ -1851,8 +1922,12 @@
       adjustmentFields.classList.toggle('hidden', type === 'score');
       noteInput.required = type !== 'score';
       adjustmentPoints.required = type !== 'score';
-      renderSavedStatePanel();
-      updateStickySaveBar();
+      if (type === 'score') {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+      } else {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+      }
       updateLayoutMetrics();
     }
 
@@ -1890,14 +1965,10 @@
       updateStickySaveBar();
     }
 
-    function clearFormAfterSubmit() {
-      document.querySelectorAll('.place-select').forEach(select => {
-        select.value = '';
-      });
+    function clearAdjustmentFormAfterSubmit() {
       adjustmentPoints.value = '';
       adjustmentPreset.value = '';
       noteInput.value = '';
-      updatePlaceOptions();
     }
 
     function handlePlaceButtonClick(event) {
@@ -1947,7 +2018,11 @@
           entryState: result.entryState,
           events: result.events || loadedEventConfig,
         });
-        clearFormAfterSubmit();
+        if (activeType !== 'score') {
+          clearAdjustmentFormAfterSubmit();
+        } else {
+          syncScoreFormWithSelection({ preserveExpandedState: true });
+        }
         formDirty = false;
         showStatus('Saved. Running totals updated.', true);
       } catch (error) {
@@ -2198,6 +2273,62 @@
       return latestData && latestData.entryState ? latestData.entryState : fallback;
     }
 
+    function createBlankScoreState() {
+      return {
+        saved: false,
+        note: '',
+        places: {
+          cohort10: '',
+          cohort11: '',
+          cohort12: '',
+        },
+      };
+    }
+
+    function getSavedRoundState(eventState, round) {
+      const savedRound = eventState && eventState.savedRounds ? eventState.savedRounds[round] : null;
+      return savedRound && savedRound.saved ? savedRound : createBlankScoreState();
+    }
+
+    function getSelectedScoreState() {
+      const entryState = getCurrentEntryState();
+      if (activePeriod === 'Period 5') {
+        const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
+        return getSavedRoundState(eventState, roundSelect.value);
+      }
+
+      const eventState = entryState.period6[eventSelect.value];
+      return eventState && eventState.saved ? eventState : createBlankScoreState();
+    }
+
+    function applyScoreStateToForm(scoreState) {
+      const nextState = scoreState && scoreState.saved ? scoreState : createBlankScoreState();
+      Object.entries(placeFieldIds).forEach(([cohortKey, fieldId]) => {
+        document.getElementById(fieldId).value = nextState.places[cohortKey] || '';
+      });
+      noteInput.value = nextState.note || '';
+      updatePlaceOptions();
+    }
+
+    function syncScoreFormWithSelection(options = {}) {
+      if (activeType !== 'score') {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+        return;
+      }
+
+      if (!options.preserveExpandedState) {
+        savedStateExpanded = false;
+      }
+
+      applyScoreStateToForm(getSelectedScoreState());
+      formDirty = false;
+      stickySaveState = 'idle';
+      stickySaveMessage = 'Choose placements, then save manually.';
+      renderSavedStatePanel();
+      updateStickySaveBar();
+    }
+
     function getScoreSelectionLabel() {
       const eventName = eventSelect.value || 'Select an event';
       const roundText = activePeriod === 'Period 5' ? ` • ${roundSelect.value}` : '';
@@ -2215,8 +2346,8 @@
 
       if (activePeriod === 'Period 5') {
         const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
-        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round]).length;
-        const currentRoundSaved = Boolean(eventState.savedRounds && eventState.savedRounds[roundSelect.value]);
+        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round] && eventState.savedRounds[round].saved).length;
+        const currentRoundSaved = Boolean(eventState.savedRounds && eventState.savedRounds[roundSelect.value] && eventState.savedRounds[roundSelect.value].saved);
         return {
           title: getScoreSelectionLabel(),
           status: currentRoundSaved
@@ -2239,55 +2370,99 @@
     function renderSavedStatePanel() {
       if (activeType !== 'score') {
         savedStatePanel.innerHTML = `
-          <div class="saved-state-header">
-            <div class="saved-state-title">Saved Score Status</div>
-            <div class="saved-state-pill"><i class="ti ti-adjustments"></i><span>Adjustments use notes + manual save</span></div>
-          </div>
+          <button class="saved-state-toggle" type="button" data-saved-state-toggle aria-expanded="${savedStateExpanded ? 'true' : 'false'}">
+            <div class="saved-state-toggle-copy">
+              <div class="saved-state-kicker">Saved Score Status</div>
+              <div class="saved-state-summary">Adjustments save manually</div>
+              <div class="saved-state-detail">Penalty and bonus entries never autosave.</div>
+            </div>
+            <div class="saved-state-toggle-side">
+              <div class="saved-state-pill"><i class="ti ti-adjustments"></i><span>Manual</span></div>
+              <i class="ti ti-chevron-down saved-state-chevron"></i>
+            </div>
+          </button>
+          ${savedStateExpanded ? `
+            <div class="saved-state-body">
+              <div class="saved-state-note">Adjustments stay manual-only. Add the note you want, then use the sticky save bar when you're ready.</div>
+            </div>
+          ` : ''}
         `;
+        savedStatePanel.classList.toggle('expanded', savedStateExpanded);
         return;
       }
 
       const entryState = getCurrentEntryState();
       if (activePeriod === 'Period 5') {
         const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
-        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round]).length;
+        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round] && eventState.savedRounds[round].saved).length;
+        const currentRoundState = getSavedRoundState(eventState, roundSelect.value);
+        const currentRoundLabel = currentRoundState.saved ? `${roundSelect.value} saved` : `${roundSelect.value} open`;
         savedStatePanel.innerHTML = `
-          <div class="saved-state-header">
-            <div class="saved-state-title">Saved Rounds</div>
-            <div class="saved-state-pill ${savedCount ? 'is-saved' : ''}">
-              <i class="ti ${savedCount ? 'ti-circle-check' : 'ti-clock-hour-4'}"></i>
-              <span>${savedCount}/4 saved for ${escapeHtml(eventSelect.value || 'this station')}</span>
+          <button class="saved-state-toggle" type="button" data-saved-state-toggle aria-expanded="${savedStateExpanded ? 'true' : 'false'}">
+            <div class="saved-state-toggle-copy">
+              <div class="saved-state-kicker">Saved Rounds</div>
+              <div class="saved-state-summary">Saved rounds: ${savedCount}/4</div>
+              <div class="saved-state-detail">${escapeHtml(eventSelect.value || 'This station')} • ${escapeHtml(currentRoundLabel)}</div>
             </div>
-          </div>
-          <div class="round-status-grid">
-            ${roundOptions.map(round => {
-              const saved = Boolean(eventState.savedRounds && eventState.savedRounds[round]);
-              const current = roundSelect.value === round;
-              return `
-                <button class="round-status-btn ${saved ? 'saved' : ''} ${current ? 'current' : ''}" type="button" data-round-jump="${escapeAttribute(round)}">
-                  <span class="round-status-text">${escapeHtml(round)}</span>
-                  <span class="round-status-meta">
-                    <i class="ti ${saved ? 'ti-circle-check' : current ? 'ti-arrow-right' : 'ti-circle-dashed'}"></i>
-                    ${saved ? 'Saved' : current ? 'Current' : 'Open'}
-                  </span>
-                </button>
-              `;
-            }).join('')}
-          </div>
+            <div class="saved-state-toggle-side">
+              <div class="saved-state-pill ${savedCount ? 'is-saved' : ''}">
+                <i class="ti ${savedCount ? 'ti-circle-check' : 'ti-clock-hour-4'}"></i>
+                <span>${savedCount}/4</span>
+              </div>
+              <i class="ti ti-chevron-down saved-state-chevron"></i>
+            </div>
+          </button>
+          ${savedStateExpanded ? `
+            <div class="saved-state-body">
+              <div class="round-status-grid">
+                ${roundOptions.map(round => {
+                  const roundState = getSavedRoundState(eventState, round);
+                  const saved = Boolean(roundState.saved);
+                  const current = roundSelect.value === round;
+                  const label = saved
+                    ? (current ? 'Current saved' : 'Saved')
+                    : (current ? 'Current open' : 'Open');
+                  return `
+                    <button class="round-status-btn ${saved ? 'saved' : ''} ${current ? 'current' : ''}" type="button" data-round-jump="${escapeAttribute(round)}">
+                      <span class="round-status-text">${escapeHtml(round)}</span>
+                      <span class="round-status-meta">
+                        <i class="ti ${saved ? 'ti-circle-check' : current ? 'ti-arrow-right' : 'ti-circle-dashed'}"></i>
+                        ${label}
+                      </span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
         `;
+        savedStatePanel.classList.toggle('expanded', savedStateExpanded);
         return;
       }
 
-      const eventState = entryState.period6[eventSelect.value] || { saved: false };
+      const eventState = entryState.period6[eventSelect.value] || createBlankScoreState();
       savedStatePanel.innerHTML = `
-        <div class="saved-state-header">
-          <div class="saved-state-title">Saved Event Status</div>
-          <div class="saved-state-pill ${eventState.saved ? 'is-saved' : ''}">
-            <i class="ti ${eventState.saved ? 'ti-circle-check' : 'ti-circle-dashed'}"></i>
-            <span>${eventState.saved ? 'Saved result on file' : 'Not saved yet'}</span>
+        <button class="saved-state-toggle" type="button" data-saved-state-toggle aria-expanded="${savedStateExpanded ? 'true' : 'false'}">
+          <div class="saved-state-toggle-copy">
+            <div class="saved-state-kicker">Saved Event</div>
+            <div class="saved-state-summary">${eventState.saved ? 'Saved result on file' : 'No saved result yet'}</div>
+            <div class="saved-state-detail">${escapeHtml(eventSelect.value || 'This event')} • ${eventState.saved ? 'Tap to review status' : 'Placements are blank until you save'}</div>
           </div>
-        </div>
-      `;
+          <div class="saved-state-toggle-side">
+            <div class="saved-state-pill ${eventState.saved ? 'is-saved' : ''}">
+              <i class="ti ${eventState.saved ? 'ti-circle-check' : 'ti-circle-dashed'}"></i>
+              <span>${eventState.saved ? 'Saved' : 'Open'}</span>
+            </div>
+            <i class="ti ti-chevron-down saved-state-chevron"></i>
+          </div>
+        </button>
+        ${savedStateExpanded ? `
+          <div class="saved-state-body">
+            <div class="saved-state-note">${eventState.saved ? 'This Period 6 event already has saved placements. Selecting it restores the saved buttons until you change them and save again.' : 'This Period 6 event has no saved placements yet. The placement buttons stay blank until you save manually.'}</div>
+          </div>
+        ` : ''}
+        `;
+      savedStatePanel.classList.toggle('expanded', savedStateExpanded);
     }
 
     function updateStickySaveBar() {
@@ -2386,9 +2561,8 @@
     });
 
     eventSelect.addEventListener('change', updateStickySaveBar);
-    eventSelect.addEventListener('change', renderSavedStatePanel);
-    roundSelect.addEventListener('change', renderSavedStatePanel);
-    roundSelect.addEventListener('change', updateStickySaveBar);
+    eventSelect.addEventListener('change', () => syncScoreFormWithSelection());
+    roundSelect.addEventListener('change', () => syncScoreFormWithSelection());
     noteInput.addEventListener('input', markFormDirtyAndRefresh);
     adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
@@ -2405,14 +2579,22 @@
     });
 
     savedStatePanel.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-saved-state-toggle]');
+      if (toggle) {
+        savedStateExpanded = !savedStateExpanded;
+        renderSavedStatePanel();
+        updateLayoutMetrics();
+        return;
+      }
+
       const roundButton = event.target.closest('[data-round-jump]');
       if (!roundButton) {
         return;
       }
 
       roundSelect.value = roundButton.dataset.roundJump;
-      renderSavedStatePanel();
-      updateStickySaveBar();
+      savedStateExpanded = false;
+      syncScoreFormWithSelection({ preserveExpandedState: true });
     });
 
     breakdownList.addEventListener('click', event => {
