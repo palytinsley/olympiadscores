@@ -1,151 +1,2957 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-    <?!= include('CSS'); ?>
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar" aria-label="Country groups">
-        <div class="brand-block">
-          <p class="eyebrow">Presentation Grader</p>
-          <h1>Country Groups</h1>
-        </div>
+<!doctype html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17212b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SJP Scores">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href='data:application/manifest+json,{"name":"SJP Olympiad Scoring","short_name":"SJP Scores","start_url":"./","display":"standalone","background_color":"#f4f6f1","theme_color":"#17212b","icons":[{"src":"https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/scoreboard.svg","sizes":"192x192","type":"image/svg+xml"},{"src":"https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/trophy.svg","sizes":"512x512","type":"image/svg+xml"}]}'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Lexend:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>SJP Olympiad Scoring</title>
+  <style>
+    :root {
+      --page-gutter: 12px;
+      --header-offset: 0px;
+      --nav-offset: calc(78px + env(safe-area-inset-bottom));
+      --savebar-offset: 0px;
+      --bg: #eef2eb;
+      --surface: #ffffff;
+      --surface-soft: #f5f7f2;
+      --surface-strong: #e7ece4;
+      --ink: #17212b;
+      --muted: #5b6670;
+      --border: #1f2933;
+      --border-soft: rgba(23, 33, 43, 0.14);
+      --navy: #17212b;
+      --green: #4d6b2a;
+      --green-soft: #e5edd7;
+      --yellow: #f5c518;
+      --yellow-soft: #fff5c9;
+      --red: #c83d31;
+      --red-soft: #f7d8d2;
+      --purple: #7c3aed;
+      --success-bg: #dcfce7;
+      --success-ink: #14532d;
+      --danger-bg: #fee2e2;
+      --danger-ink: #7f1d1d;
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --shadow-card: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --shadow-press: inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+      color-scheme: light;
+      font-family: "Lexend", system-ui, sans-serif;
+    }
 
-        <div class="filter-row" role="group" aria-label="Filter by period">
-          <button class="filter-btn active" data-period="All">All</button>
-          <button class="filter-btn" data-period="5">Period 5</button>
-          <button class="filter-btn" data-period="6">Period 6</button>
-        </div>
+    * {
+      box-sizing: border-box;
+    }
 
-        <div class="progress-card" id="summaryProgressCard" aria-label="Grading progress">
-          <div class="progress-ring" aria-hidden="true">
-            <svg viewBox="0 0 72 72">
-              <circle class="progress-ring-track" cx="36" cy="36" r="28"></circle>
-              <circle class="progress-ring-value" id="summaryProgressRing" cx="36" cy="36" r="28"></circle>
-            </svg>
-            <span id="summaryPercent">0%</span>
-          </div>
-          <div class="progress-copy">
-            <span>Grading Progress</span>
-            <strong id="summaryGroupCount">0/0 Groups</strong>
-          </div>
-        </div>
+    html {
+      height: 100%;
+      height: -webkit-fill-available;
+    }
 
-        <label class="jump-label" for="groupJump">Quick jump</label>
-        <select id="groupJump" class="group-jump"></select>
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 34%),
+        linear-gradient(180deg, #f7f9f5 0%, var(--bg) 100%);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
 
-        <div id="groupList" class="group-list" aria-live="polite"></div>
-      </aside>
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
 
-      <main class="workspace">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow" id="periodLabel">Select a group</p>
-            <h2 id="countryTitle">Presentation grading</h2>
-            <div class="header-meta">
-              <p class="subtle" id="studentLine">Load a country group to begin.</p>
-              <div class="student-nav-pills hidden" id="studentNavPills" aria-label="Jump to student"></div>
-            </div>
-          </div>
-          <div class="topbar-actions">
-            <div class="grading-actions" id="gradingActions">
-              <span class="save-pill" id="saveState"><i class="ti ti-device-floppy" aria-hidden="true"></i> Loading...</span>
-              <div class="slide-actions" id="slideLinks"></div>
-              <button class="secondary-btn" id="prevGroupBtn"><i class="ti ti-arrow-left" aria-hidden="true"></i> Previous</button>
-              <button class="secondary-btn" id="nextGroupBtn">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
-              <button class="primary-btn" id="nextUngradedBtn"><i class="ti ti-player-skip-forward" aria-hidden="true"></i> Next Ungraded</button>
-            </div>
-            <div class="settings-menu-wrap">
-              <button class="icon-btn" id="settingsBtn" aria-expanded="false" aria-haspopup="true" aria-controls="settingsMenu" aria-label="Settings">
-                <i class="ti ti-settings" aria-hidden="true"></i>
-              </button>
-              <div class="settings-menu hidden" id="settingsMenu" role="menu">
-                <a href="#" id="openSpreadsheetLink" target="_blank" rel="noopener" role="menuitem">
-                  <i class="ti ti-table" aria-hidden="true"></i> Open spreadsheet
-                </a>
-                <button type="button" id="schoologyModeBtn" role="menuitem">
-                  <i class="ti ti-clipboard-text" aria-hidden="true"></i> Schoology mode
-                </button>
-                <button type="button" id="gradingModeBtn" role="menuitem" class="hidden">
-                  <i class="ti ti-pencil" aria-hidden="true"></i> Return to grading mode
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+    button,
+    select,
+    input,
+    textarea {
+      font: inherit;
+    }
 
-        <section class="notice error hidden" id="errorBox"></section>
+    button {
+      border: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        <section class="content-grid hidden" id="gradingContent">
-          <section class="panel group-panel" aria-labelledby="groupScoresHeading">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Shared group scoring</p>
-                <h3 id="groupScoresHeading"><i class="ti ti-users-group" aria-hidden="true"></i> Group Rubric</h3>
-                <p class="section-note">This score is entered once and applied to every student in the country group.</p>
-              </div>
-              <span class="status-badge" id="groupStatus">Ungraded</span>
-            </div>
+    .hidden {
+      display: none !important;
+    }
 
-            <div class="rubric-card shared-card">
-              <div class="rubric-card-head">
-                <div>
-                  <span class="rubric-title"><span class="rubric-icon"><i class="ti ti-slideshow" aria-hidden="true"></i></span> Slide Design & Visual Storytelling</span>
-                  <small>0-6 points</small>
-                </div>
-                <span class="scoring-badge shared">Shared Group Score</span>
-              </div>
-              <p class="rubric-guidance">Look for 9-12 high-resolution, historically relevant images in a clear, logical order. The title slide should include country name and thesis, and the images should create a cohesive visual narrative that shows planning and collaboration.</p>
-              <div class="rubric-performance-grid" id="slideDesignBands" aria-label="Slide Design & Visual Storytelling performance levels"></div>
-              <label class="score-field manual-score-field" for="slideDesignScore">
-                <span>Manual score</span>
-                <input id="slideDesignScore" data-group-field="slideDesignScore" data-score-input="slideDesignScore" type="number" min="0" max="6" step="any" inputmode="decimal" aria-describedby="slideDesignScoreHelp">
-                <small id="slideDesignScoreHelp">0-6 points. Click a band to fill a default score, click again to clear, or type a custom score.</small>
-              </label>
-              <label class="score-field comment-field group-comment-field" for="groupComment">
-                <span>Group Comment</span>
-                <textarea id="groupComment" data-group-field="groupComment" rows="2" placeholder="Shared feedback for this group..."></textarea>
-              </label>
-            </div>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
-          </section>
+    .app-header {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 80;
+      padding: calc(env(safe-area-inset-top) + 8px) max(var(--page-gutter), env(safe-area-inset-right)) 8px max(var(--page-gutter), env(safe-area-inset-left));
+      background: rgba(247, 249, 245, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(23, 33, 43, 0.08);
+      transform: translateZ(0);
+    }
 
-          <section class="panel student-panel" aria-labelledby="studentScoresHeading">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Per-student scoring</p>
-                <h3 id="studentScoresHeading"><i class="ti ti-user" aria-hidden="true"></i> Students</h3>
-                <p class="section-note">Historical Accuracy & Context and Presentation Skills are scored separately for each student.</p>
-              </div>
-              <button class="text-btn" id="toggleCommentsBtn">Collapse comments</button>
-            </div>
-            <div id="studentList" class="student-list"></div>
-          </section>
-        </section>
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
 
-        <section class="schoology-view hidden" id="schoologyContent" aria-labelledby="schoologyHeading">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Read-only export</p>
-              <h3 id="schoologyHeading"><i class="ti ti-clipboard-text" aria-hidden="true"></i> Schoology Mode</h3>
-              <p class="section-note">Copy final scores and stitched comments into Schoology. Scores and comments are read from the spreadsheet.</p>
-            </div>
-          </div>
-          <div id="schoologyList" class="schoology-list"></div>
-        </section>
+    .app-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-size: clamp(1rem, 3.7vw, 1.15rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
 
-        <section class="empty-state" id="emptyState">
-          <h2>Choose a country group.</h2>
-          <p>The latest spreadsheet data will load here, and every score change will autosave.</p>
-        </section>
-      </main>
+    .app-title i {
+      font-size: 1.1em;
+    }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1.5px solid rgba(23, 33, 43, 0.12);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .sync-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--red);
+      box-shadow: 0 0 0 4px rgba(200, 61, 49, 0.14);
+      animation: livePulse 1.25s ease-in-out infinite;
+    }
+
+    .totals-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .total-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      border-radius: 16px;
+      padding: 8px 6px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: clamp(1.02rem, 4vw, 1.28rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      box-shadow: var(--shadow-card);
+      text-align: center;
+    }
+
+    .total-card.cohort10 {
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .total-card.cohort11 {
+      background: var(--yellow);
+      color: var(--navy);
+    }
+
+    .total-card.cohort12 {
+      background: var(--red);
+      color: #ffffff;
+    }
+
+    .total-card span {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .total-card strong {
+      font-size: 1.18em;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    main {
+      flex: 1 0 auto;
+      width: min(720px, 100%);
+      margin: 0 auto;
+      padding: calc(var(--header-offset) + 12px) max(var(--page-gutter), env(safe-area-inset-right)) calc(20px + var(--nav-offset) + var(--savebar-offset)) max(var(--page-gutter), env(safe-area-inset-left));
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .section {
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .form-panel,
+    .table-panel,
+    .leaderboard-card {
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+    }
+
+    .form-panel {
+      padding: 12px;
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .place-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      grid-template-columns: 1fr;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    select,
+    input,
+    textarea {
+      width: 100%;
+      min-height: 52px;
+      border: 1.5px solid rgba(23, 33, 43, 0.18);
+      border-radius: 16px;
+      background: var(--surface-soft);
+      color: var(--ink);
+      padding: 12px 14px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      outline: none;
+      appearance: none;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+      font-weight: 700;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: rgba(200, 61, 49, 0.7);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(200, 61, 49, 0.12);
+    }
+
+    .segmented,
+    .adjustment-toggle {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .segmented {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .adjustment-toggle {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .segment-btn,
+    .type-btn {
+      min-height: 48px;
+      border: 1.5px solid rgba(23, 33, 43, 0.14);
+      border-radius: 16px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+      transition: transform 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+
+    .segment-btn.active,
+    .type-btn.active {
+      background: var(--navy);
+      color: #ffffff;
+      border-color: var(--navy);
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .cohort-box {
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      border-radius: 22px;
+      padding: 10px;
+      background: var(--surface-soft);
+      transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .cohort-box.cohort10 {
+      background: linear-gradient(180deg, var(--green-soft), #f8fbf3);
+    }
+
+    .cohort-box.cohort11 {
+      background: linear-gradient(180deg, var(--yellow-soft), #fffdf4);
+    }
+
+    .cohort-box.cohort12 {
+      background: linear-gradient(180deg, var(--red-soft), #fff7f5);
+    }
+
+    .cohort-box.cohort10.place-selected {
+      border-color: rgba(77, 107, 42, 0.42);
+      box-shadow: 0 12px 24px rgba(77, 107, 42, 0.16);
+    }
+
+    .cohort-box.cohort11.place-selected {
+      border-color: rgba(245, 197, 24, 0.42);
+      box-shadow: 0 12px 24px rgba(245, 197, 24, 0.18);
+    }
+
+    .cohort-box.cohort12.place-selected {
+      border-color: rgba(200, 61, 49, 0.36);
+      box-shadow: 0 12px 24px rgba(200, 61, 49, 0.16);
+    }
+
+    .cohort-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .cohort-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .cohort-chip.cohort10 {
+      color: var(--green);
+    }
+
+    .cohort-chip.cohort11 {
+      color: #8a6800;
+    }
+
+    .cohort-chip.cohort12 {
+      color: var(--red);
+    }
+
+    .place-select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      min-height: 0;
+      margin: -1px;
+      border: 0;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .place-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .place-btn {
+      min-height: 62px;
+      border: 1.5px solid rgba(23, 33, 43, 0.18);
+      border-radius: 18px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 1.22rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      box-shadow: inset 0 -3px 0 rgba(23, 33, 43, 0.06);
+      transition: transform 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+
+    .cohort-box.cohort10 .place-btn.selected {
+      background: var(--green);
+      border-color: var(--green);
+      color: #ffffff;
+    }
+
+    .cohort-box.cohort11 .place-btn.selected {
+      background: var(--yellow);
+      border-color: var(--yellow);
+      color: var(--navy);
+    }
+
+    .cohort-box.cohort12 .place-btn.selected {
+      background: var(--red);
+      border-color: var(--red);
+      color: #ffffff;
+    }
+
+    .place-btn:disabled {
+      opacity: 0.34;
+      cursor: not-allowed;
+    }
+
+    .submit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 58px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 18px;
+      background: var(--red);
+      color: #ffffff;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-press);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.58;
+      cursor: wait;
+    }
+
+    .saved-state-panel {
+      display: none;
+    }
+
+    .saved-state-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8faf6 100%);
+      text-align: left;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.04);
+    }
+
+    .saved-state-toggle-copy {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .saved-state-kicker {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .saved-state-summary {
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .saved-state-detail {
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.74rem;
+      font-weight: 700;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .saved-state-toggle-side {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .saved-state-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .saved-state-pill.is-saved {
+      border-color: rgba(77, 107, 42, 0.24);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .saved-state-chevron {
+      font-size: 1rem;
+      color: var(--muted);
+      transition: transform 180ms ease;
+    }
+
+    .saved-state-panel.expanded .saved-state-chevron {
+      transform: rotate(180deg);
+    }
+
+    .saved-state-body {
+      display: grid;
+      gap: 8px;
+      padding: 2px 2px 0;
+    }
+
+    .round-status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .round-status-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1.5px solid rgba(23, 33, 43, 0.12);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+    }
+
+    .round-status-btn.current {
+      border-color: rgba(200, 61, 49, 0.48);
+      box-shadow: 0 10px 20px rgba(200, 61, 49, 0.12);
+    }
+
+    .round-status-btn.saved {
+      background: linear-gradient(180deg, #f8fbf3 0%, #eef6e1 100%);
+      border-color: rgba(77, 107, 42, 0.3);
+    }
+
+    .round-status-text {
+      min-width: 0;
+      text-align: left;
+    }
+
+    .round-status-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .round-status-btn.saved .round-status-meta {
+      color: var(--green);
+    }
+
+    .saved-state-note {
+      padding: 10px 12px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .status {
+      display: none;
+      margin-top: 10px;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .status.good {
+      display: block;
+      background: var(--success-bg);
+      color: var(--success-ink);
+    }
+
+    .status.bad {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger-ink);
+    }
+
+    .settings-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .settings-card {
+      padding: 12px;
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      background: var(--surface-soft);
+    }
+
+    .settings-card-header {
+      margin-bottom: 10px;
+    }
+
+    .settings-card-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .settings-card-copy {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .event-manager-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .event-row {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 18px;
+      background: #ffffff;
+    }
+
+    .event-row-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .event-action-btn,
+    .add-event-btn {
+      min-height: 48px;
+      border: 1.5px solid rgba(23, 33, 43, 0.12);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+    }
+
+    .event-action-btn:disabled {
+      opacity: 0.34;
+      cursor: not-allowed;
+    }
+
+    .add-event-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: rgba(77, 107, 42, 0.18);
+    }
+
+    .settings-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .submit-btn.danger-btn {
+      background: var(--red);
+      color: #ffffff;
+    }
+
+    .empty-state {
+      padding: 12px;
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .breakdown-list,
+    .leaderboard {
+      display: grid;
+      gap: 10px;
+    }
+
+    .breakdown-row {
+      padding: 0;
+      border-left: 6px solid var(--red);
+    }
+
+    .breakdown-toggle {
+      width: 100%;
+      padding: 12px;
+      border: 0;
+      border-radius: inherit;
+      background: transparent;
+      text-align: left;
+    }
+
+    .breakdown-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 1.02rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .breakdown-name-main {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .breakdown-chevron {
+      flex: 0 0 auto;
+      font-size: 1rem;
+      color: var(--muted);
+      transition: transform 180ms ease;
+    }
+
+    .breakdown-row.expanded .breakdown-chevron {
+      transform: rotate(180deg);
+    }
+
+    .breakdown-body {
+      display: none;
+      padding: 0 12px 12px;
+    }
+
+    .breakdown-row.expanded .breakdown-body {
+      display: grid;
+      gap: 8px;
+    }
+
+    .entry-detail-card {
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 18px;
+      background: var(--surface-soft);
+      padding: 10px;
+    }
+
+    .entry-detail-card.adjustment {
+      background: #fff8eb;
+      border-color: rgba(245, 197, 24, 0.24);
+    }
+
+    .entry-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .entry-detail-title {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .entry-detail-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .entry-detail-card.adjustment .entry-detail-badge {
+      background: #fff2cc;
+      color: #8a6800;
+    }
+
+    .entry-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .entry-detail-cell {
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 8px;
+      text-align: center;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .entry-detail-cell strong {
+      display: block;
+      margin-top: 4px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1.04rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .entry-detail-cell.winner {
+      outline: 2px solid rgba(77, 107, 42, 0.26);
+      background: linear-gradient(180deg, #f8fbf3 0%, #eef6e1 100%);
+    }
+
+    .entry-detail-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .period-tag {
+      flex: 0 0 auto;
+      min-height: 28px;
+      border-radius: 999px;
+      background: var(--yellow);
+      color: var(--navy);
+      padding: 6px 10px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .mini-scores {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .mini-score {
+      border-radius: 16px;
+      padding: 10px 8px;
+      background: var(--surface-soft);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .mini-score strong {
+      display: block;
+      margin-top: 4px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .leaderboard-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 12px;
+      color: #ffffff;
+    }
+
+    .leaderboard-card.cohort10 {
+      background: var(--green);
+    }
+
+    .leaderboard-card.cohort11 {
+      background: var(--yellow);
+      color: var(--navy);
+    }
+
+    .leaderboard-card.cohort12 {
+      background: var(--red);
+    }
+
+    .rank-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 1.5rem;
+    }
+
+    .cohort-name {
+      font-size: 1.15rem;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .rank-label {
+      margin-top: 4px;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      opacity: 0.88;
+      text-transform: uppercase;
+    }
+
+    .leader-points {
+      font-size: clamp(2rem, 10vw, 2.6rem);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 8px max(var(--page-gutter), env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(var(--page-gutter), env(safe-area-inset-left));
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(23, 33, 43, 0.1);
+      box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .sticky-save-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--nav-offset);
+      z-index: 50;
+      padding: 10px max(var(--page-gutter), env(safe-area-inset-right)) 0 max(var(--page-gutter), env(safe-area-inset-left));
+      pointer-events: none;
+    }
+
+    .sticky-save-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12);
+      pointer-events: auto;
+    }
+
+    .sticky-save-copy {
+      min-width: 0;
+    }
+
+    .sticky-save-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sticky-save-label.good {
+      color: var(--green);
+    }
+
+    .sticky-save-label.pending {
+      color: #9a6b00;
+    }
+
+    .sticky-save-label.bad {
+      color: var(--red);
+    }
+
+    .sticky-save-label.saving {
+      color: var(--navy);
+    }
+
+    .sticky-save-indicator {
+      display: none;
+      width: 0.78rem;
+      height: 0.78rem;
+      border: 2px solid rgba(23, 33, 43, 0.16);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .sticky-save-title {
+      margin-top: 4px;
+      font-size: 0.92rem;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sticky-save-status {
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .sticky-save-status.good {
+      color: var(--green);
+    }
+
+    .sticky-save-status.bad {
+      color: var(--red);
+    }
+
+    .sticky-save-status.saving .sticky-save-indicator {
+      display: inline-flex;
+      animation: stickySaveSpin 700ms linear infinite;
+    }
+
+    .sticky-save-button {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 106px;
+      padding: 0 14px;
+      gap: 6px;
+      font-size: 0.84rem;
+      margin-top: 0;
+    }
+
+    .sticky-save-button i {
+      font-size: 1rem;
+    }
+
+    .nav-btn {
+      min-height: 56px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+
+    .nav-btn i {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.25rem;
+    }
+
+    .nav-btn.active {
+      background: var(--navy);
+      color: #ffffff;
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    @keyframes livePulse {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 0.75;
+      }
+    }
+
+    @keyframes stickySaveSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (hover: hover) {
+      .segment-btn:hover,
+      .type-btn:hover,
+      .place-btn:hover,
+      .submit-btn:hover,
+      .nav-btn:hover {
+        transform: translateY(-1px);
+      }
+    }
+
+    @media (max-width: 374px) {
+      .control-grid.two,
+      .adjustment-toggle {
+        grid-template-columns: 1fr;
+      }
+
+      .totals-grid {
+        gap: 6px;
+      }
+
+      .total-card {
+        min-height: 50px;
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 699px) {
+      :root {
+        --page-gutter: 12px;
+        --nav-offset: calc(70px + env(safe-area-inset-bottom));
+      }
+
+      main {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        padding-top: calc(var(--header-offset) + 8px);
+        padding-bottom: calc(12px + var(--nav-offset) + var(--savebar-offset));
+      }
+
+      .app-header {
+        padding-top: calc(env(safe-area-inset-top) + 8px);
+        padding-bottom: 6px;
+      }
+
+      .section {
+        margin-bottom: 8px;
+      }
+
+      .section-title {
+        margin-bottom: 6px;
+      }
+
+      .form-panel {
+        padding: 8px;
+        border-radius: 20px;
+      }
+
+      .control-grid,
+      .settings-stack,
+      .breakdown-list,
+      .leaderboard {
+        gap: 10px;
+      }
+
+      .control-grid.two {
+        gap: 8px;
+      }
+
+      .segmented,
+      .adjustment-toggle {
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .segment-btn,
+      .type-btn {
+        min-height: 44px;
+        border-radius: 14px;
+        font-size: 0.8rem;
+      }
+
+      .place-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        align-items: start;
+        margin-top: 8px;
+      }
+
+      .cohort-box {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 0;
+        padding: 8px 6px;
+        border-radius: 18px;
+      }
+
+      .cohort-heading {
+        justify-content: center;
+        margin-bottom: 6px;
+      }
+
+      .cohort-chip {
+        min-height: 24px;
+        justify-content: center;
+        width: 100%;
+        font-size: 0.74rem;
+        letter-spacing: 0.05em;
+      }
+
+      .place-buttons {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .place-btn {
+        min-height: 44px;
+        padding: 0 4px;
+        border-radius: 14px;
+        font-size: clamp(0.78rem, 3vw, 0.92rem);
+      }
+
+      .submit-btn {
+        min-height: 52px;
+        margin-top: 8px;
+      }
+
+      .round-status-grid,
+      .entry-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 72px;
+      }
+
+      .breakdown-row {
+        padding: 0;
+      }
+
+      .breakdown-toggle {
+        padding: 10px;
+      }
+
+      .breakdown-body {
+        padding: 0 10px 10px;
+      }
+
+      .leaderboard-card {
+        padding: 12px 10px;
+      }
+
+      .bottom-nav {
+        gap: 6px;
+        padding-top: 6px;
+        padding-bottom: calc(6px + env(safe-area-inset-bottom));
+      }
+
+      .sticky-save-inner {
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .sticky-save-button {
+        min-width: 92px;
+        padding: 0 12px;
+      }
+
+      .nav-btn {
+        min-height: 50px;
+        border-radius: 14px;
+      }
+    }
+
+    @media (min-width: 640px) {
+      body {
+        --nav-offset: calc(96px + env(safe-area-inset-bottom));
+      }
+
+      .app-header {
+        padding-inline: 16px;
+      }
+
+      main {
+        padding-inline: 16px;
+      }
+
+      .place-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="title-row">
+      <div class="app-title"><i class="ti ti-scoreboard"></i><span>SJP Olympiad</span></div>
+      <div class="sync-pill"><i class="ti ti-refresh"></i><span id="syncText">Syncing</span></div>
     </div>
+    <div class="debug-viewport hidden" id="viewportDebug" aria-hidden="true"></div>
+    <div class="totals-grid" id="totalsGrid"></div>
+  </header>
 
-    <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
-    <?!= include('JS'); ?>
-  </body>
+  <main>
+    <section class="view active" id="entryView">
+      <div class="section">
+        <h1 class="section-title">Score Entry</h1>
+        <div class="form-panel">
+          <div class="segmented" role="group" aria-label="Period selector">
+            <button class="segment-btn active" type="button" data-period="Period 5">Period 5</button>
+            <button class="segment-btn" type="button" data-period="Period 6">Period 6</button>
+          </div>
+
+          <div class="adjustment-toggle" role="group" aria-label="Entry type">
+            <button class="type-btn active" type="button" data-type="score">Score</button>
+            <button class="type-btn" type="button" data-type="penalty">Penalty</button>
+            <button class="type-btn" type="button" data-type="bonus">Bonus</button>
+          </div>
+
+          <form id="scoreForm">
+            <div id="scoreFields">
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="eventSelect" id="eventLabel">Station</label>
+                  <select id="eventSelect" required></select>
+                </div>
+                <div id="roundWrap">
+                  <label for="roundSelect">Round</label>
+                  <select id="roundSelect" required>
+                    <option value="Round 1">Round 1</option>
+                    <option value="Round 2">Round 2</option>
+                    <option value="Round 3">Round 3</option>
+                    <option value="Round 4">Round 4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="saved-state-panel" id="savedStatePanel" aria-hidden="true"></div>
+
+              <div class="place-grid">
+                <div class="cohort-box cohort10">
+                  <div class="cohort-heading"><span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span></div>
+                  <label class="sr-only" for="place10">Cohort 10 Place</label>
+                  <select id="place10" class="place-select" data-cohort="cohort10" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 10 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="place10">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="place10">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="place10">3rd</button>
+                  </div>
+                </div>
+                <div class="cohort-box cohort11">
+                  <div class="cohort-heading"><span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span></div>
+                  <label class="sr-only" for="place11">Cohort 11 Place</label>
+                  <select id="place11" class="place-select" data-cohort="cohort11" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 11 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="place11">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="place11">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="place11">3rd</button>
+                  </div>
+                </div>
+                <div class="cohort-box cohort12">
+                  <div class="cohort-heading"><span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span></div>
+                  <label class="sr-only" for="place12">Cohort 12 Place</label>
+                  <select id="place12" class="place-select" data-cohort="cohort12" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 12 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="place12">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="place12">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="place12">3rd</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="adjustmentFields" class="hidden">
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="adjustmentEvent">Station/Event</label>
+                  <select id="adjustmentEvent"></select>
+                </div>
+                <div>
+                  <label for="adjustmentCohort">Cohort</label>
+                  <select id="adjustmentCohort">
+                    <option value="cohort10">Cohort 10</option>
+                    <option value="cohort11">Cohort 11</option>
+                    <option value="cohort12">Cohort 12</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="adjustmentPreset">Preset</label>
+                  <select id="adjustmentPreset">
+                    <option value="">Custom points</option>
+                    <option value="1" data-type="penalty">Late penalty: -1 per student</option>
+                    <option value="5" data-type="penalty">Phone penalty: -5</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="adjustmentPoints">Point Value</label>
+                  <input id="adjustmentPoints" type="number" min="1" step="1" inputmode="numeric" placeholder="5">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+              <label for="noteInput">Note</label>
+              <textarea id="noteInput" placeholder="Optional for scores, required for adjustments"></textarea>
+            </div>
+
+            <div class="status" id="statusBox" role="status"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="breakdownView">
+      <div class="section">
+        <h1 class="section-title">Event Breakdown</h1>
+        <div class="breakdown-list" id="breakdownList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="leaderboardView">
+      <div class="section">
+        <h1 class="section-title">Leaderboard</h1>
+        <div class="leaderboard" id="leaderboardList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="settingsView">
+      <div class="section">
+        <h1 class="section-title">Settings</h1>
+        <div class="form-panel settings-stack">
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <h2 class="settings-card-title">Manage Events</h2>
+              <p class="settings-card-copy">Edit the live event lists here. Period 5 keeps rounds. Period 6 stays event-only.</p>
+            </div>
+
+            <div class="settings-stack">
+              <section class="settings-card">
+                <div class="settings-card-header">
+                  <h3 class="settings-card-title">Period 5 Rotational Field Games</h3>
+                  <p class="settings-card-copy">These appear with the Round selector during score entry.</p>
+                </div>
+                <div class="event-manager-list" id="period5EventList"></div>
+                <button class="add-event-btn" id="addPeriod5EventBtn" type="button">
+                  <i class="ti ti-plus"></i>
+                  <span>Add Period 5 Event</span>
+                </button>
+              </section>
+
+              <section class="settings-card">
+                <div class="settings-card-header">
+                  <h3 class="settings-card-title">Period 6 Cohort Competitions</h3>
+                  <p class="settings-card-copy">These appear without the Round selector.</p>
+                </div>
+                <div class="event-manager-list" id="period6EventList"></div>
+                <button class="add-event-btn" id="addPeriod6EventBtn" type="button">
+                  <i class="ti ti-plus"></i>
+                  <span>Add Period 6 Event</span>
+                </button>
+              </section>
+            </div>
+
+            <button class="submit-btn" id="saveEventsBtn" type="button">
+              <i class="ti ti-device-floppy"></i>
+              <span>Save Event List</span>
+            </button>
+            <div class="status" id="eventStatusBox" role="status"></div>
+          </div>
+
+          <div class="settings-actions">
+            <button class="submit-btn" id="openSheetBtn" type="button">
+              <i class="ti ti-table"></i>
+              <span>Open Google Sheet</span>
+            </button>
+            <button class="submit-btn danger-btn" id="resetScoresBtn" type="button">
+              <i class="ti ti-eraser"></i>
+              <span>Reset All Scores</span>
+            </button>
+            <button class="submit-btn" id="secretEventBtn" type="button" style="background: #7c3aed;">
+              <i class="ti ti-wand"></i>
+              <span>Secret Event</span>
+            </button>
+            <div class="status" id="sheetStatusBox" role="status"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="sticky-save-bar" id="stickySaveBar">
+    <div class="sticky-save-inner">
+      <div class="sticky-save-copy">
+        <div class="sticky-save-label" id="stickySaveLabel">
+          <span class="sticky-save-indicator" id="stickySaveIndicator" aria-hidden="true"></span>
+          <span id="stickySaveLabelText">Ready to Save</span>
+        </div>
+        <div class="sticky-save-title" id="stickySaveTitle">Select an event</div>
+        <div class="sticky-save-status" id="stickySaveStatus">
+          <span class="sticky-save-indicator" aria-hidden="true"></span>
+          <span id="stickySaveStatusText">Choose placements, then save manually.</span>
+        </div>
+      </div>
+      <button class="submit-btn sticky-save-button" id="submitBtn" type="submit" form="scoreForm">
+        <i class="ti ti-device-floppy"></i>
+        <span>Save</span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button class="nav-btn active" type="button" data-view="entryView"><i class="ti ti-edit"></i>Entry</button>
+    <button class="nav-btn" type="button" data-view="breakdownView"><i class="ti ti-chart-bar"></i>Breakdown</button>
+    <button class="nav-btn" type="button" data-view="leaderboardView"><i class="ti ti-trophy"></i>Leaders</button>
+    <button class="nav-btn" type="button" data-view="settingsView"><i class="ti ti-settings"></i>Settings</button>
+  </nav>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwTqaiUwXK63Z8zyWWGnFHyMT6QIEUarlALj52hYfiiDtid9gi9j2WSrVtKwGKOf5Q7/exec';
+    const cohorts = [
+      { key: 'cohort10', label: 'Cohort 10', shortLabel: '10', className: 'cohort10', icon: 'ti-shield' },
+      { key: 'cohort11', label: 'Cohort 11', shortLabel: '11', className: 'cohort11', icon: 'ti-sun' },
+      { key: 'cohort12', label: 'Cohort 12', shortLabel: '12', className: 'cohort12', icon: 'ti-flame' },
+    ];
+    const roundOptions = ['Round 1', 'Round 2', 'Round 3', 'Round 4'];
+    const rankIcons = ['ti-trophy', 'ti-medal-2', 'ti-medal'];
+    let activePeriod = 'Period 5';
+    let activeType = 'score';
+    let latestData = null;
+    let loadedEventConfig = { period5: [], period6: [] };
+    let eventEditorState = { period5: [], period6: [] };
+    let eventEditorDirty = false;
+    let savingEventConfig = false;
+    let formDirty = false;
+    let stickySaveState = 'idle';
+    let stickySaveMessage = 'Choose placements, then save manually.';
+    let savedStateExpanded = false;
+    let suppressScoreSelectionGuard = false;
+    let confirmedSavedEditKey = '';
+    let selectionState = {
+      period: 'Period 5',
+      eventName: '',
+      round: roundOptions[0],
+    };
+    const expandedBreakdownEvents = new Set();
+    const placeFieldIds = {
+      cohort10: 'place10',
+      cohort11: 'place11',
+      cohort12: 'place12',
+    };
+
+    const totalsGrid = document.getElementById('totalsGrid');
+    const syncText = document.getElementById('syncText');
+    const viewportDebug = document.getElementById('viewportDebug');
+    const scoreForm = document.getElementById('scoreForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusBox = document.getElementById('statusBox');
+    const eventSelect = document.getElementById('eventSelect');
+    const eventLabel = document.getElementById('eventLabel');
+    const roundWrap = document.getElementById('roundWrap');
+    const scoreFields = document.getElementById('scoreFields');
+    const adjustmentFields = document.getElementById('adjustmentFields');
+    const adjustmentEvent = document.getElementById('adjustmentEvent');
+    const adjustmentPreset = document.getElementById('adjustmentPreset');
+    const adjustmentPoints = document.getElementById('adjustmentPoints');
+    const noteInput = document.getElementById('noteInput');
+    const breakdownList = document.getElementById('breakdownList');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const openSheetBtn = document.getElementById('openSheetBtn');
+    const resetScoresBtn = document.getElementById('resetScoresBtn');
+    const secretEventBtn = document.getElementById('secretEventBtn');
+    const sheetStatusBox = document.getElementById('sheetStatusBox');
+    const period5EventList = document.getElementById('period5EventList');
+    const period6EventList = document.getElementById('period6EventList');
+    const addPeriod5EventBtn = document.getElementById('addPeriod5EventBtn');
+    const addPeriod6EventBtn = document.getElementById('addPeriod6EventBtn');
+    const saveEventsBtn = document.getElementById('saveEventsBtn');
+    const eventStatusBox = document.getElementById('eventStatusBox');
+    const roundSelect = document.getElementById('roundSelect');
+    const savedStatePanel = document.getElementById('savedStatePanel');
+    const stickySaveBar = document.getElementById('stickySaveBar');
+    const stickySaveLabel = document.getElementById('stickySaveLabel');
+    const stickySaveLabelText = document.getElementById('stickySaveLabelText');
+    const stickySaveTitle = document.getElementById('stickySaveTitle');
+    const stickySaveStatus = document.getElementById('stickySaveStatus');
+    const stickySaveStatusText = document.getElementById('stickySaveStatusText');
+    const appHeader = document.querySelector('.app-header');
+
+    function isApiUrlConfigured() {
+      return API_URL && !API_URL.includes('PASTE_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE');
+    }
+
+    function getErrorMessage(error, fallbackMessage) {
+      return error && error.message ? error.message : fallbackMessage;
+    }
+
+    function setSyncMessage(message) {
+      syncText.textContent = message;
+    }
+
+    async function serverRun(functionName, payload = {}) {
+      if (!isApiUrlConfigured()) {
+        throw new Error('API URL is not configured.');
+      }
+
+      let response;
+      try {
+        response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify({
+            action: functionName,
+            payload,
+          }),
+        });
+      } catch (error) {
+        throw new Error('Could not reach Google backend.');
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error('Google backend returned invalid JSON.');
+      }
+
+      if (!response.ok) {
+        throw new Error(data && data.error ? data.error : 'Could not reach Google backend.');
+      }
+
+      if (!data || data.ok !== true) {
+        throw new Error(data && data.error ? data.error : 'Google backend returned an error.');
+      }
+
+      return data.result;
+    }
+
+    function updateViewportDebug() {
+      if (!viewportDebug) {
+        return;
+      }
+
+      viewportDebug.textContent = `hidden debug ${window.innerWidth} / ${document.documentElement.clientWidth}`;
+    }
+
+    function updateLayoutMetrics() {
+      const headerHeight = appHeader ? Math.ceil(appHeader.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--header-offset', `${headerHeight}px`);
+
+      const saveBarVisible = !stickySaveBar.classList.contains('hidden');
+      const saveBarHeight = saveBarVisible ? Math.ceil(stickySaveBar.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--savebar-offset', `${saveBarHeight}px`);
+      updateViewportDebug();
+    }
+
+    function renderTotals(totals) {
+      const byKey = Object.fromEntries((totals.cohorts || []).map(item => [item.key, item]));
+      totalsGrid.innerHTML = cohorts.map(cohort => {
+        const total = byKey[cohort.key]?.total || 0;
+        return `
+          <div class="total-card ${cohort.className}">
+            <span>C${cohort.shortLabel} <strong>${total}</strong></span>
+          </div>
+        `;
+      }).join('');
+      updateLayoutMetrics();
+    }
+
+    function renderBreakdown(rows) {
+      if (!rows || !rows.length) {
+        breakdownList.innerHTML = '<div class="empty-state">No scores yet. Saved rounds and winners will appear here.</div>';
+        return;
+      }
+
+      breakdownList.innerHTML = rows.map(row => {
+        const eventKey = `${row.period}::${row.eventName}`;
+        const expanded = expandedBreakdownEvents.has(eventKey);
+        const entries = Array.isArray(row.entries) ? row.entries : [];
+        return `
+          <article class="form-panel breakdown-row ${expanded ? 'expanded' : ''}" data-event-key="${escapeAttribute(eventKey)}">
+            <button class="breakdown-toggle" type="button" data-breakdown-toggle="${escapeAttribute(eventKey)}" aria-expanded="${expanded ? 'true' : 'false'}">
+              <div class="breakdown-name">
+                <span class="breakdown-name-main">
+                  <i class="ti ti-chevron-down breakdown-chevron"></i>
+                  <span>${escapeHtml(row.eventName)}</span>
+                </span>
+                <span class="period-tag">${escapeHtml(row.period)}</span>
+              </div>
+              <div class="mini-scores">
+                <div class="mini-score">C10<strong>${row.cohort10}</strong></div>
+                <div class="mini-score">C11<strong>${row.cohort11}</strong></div>
+                <div class="mini-score">C12<strong>${row.cohort12}</strong></div>
+              </div>
+            </button>
+            <div class="breakdown-body">
+              ${entries.length ? entries.map(renderBreakdownEntry).join('') : '<div class="empty-state">No round-level entries yet.</div>'}
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderBreakdownEntry(entry) {
+      const isAdjustment = entry.type !== 'score';
+      const badge = isAdjustment
+        ? `${escapeHtml(entry.type)}`
+        : `${escapeHtml(getWinnerLabel(entry))}`;
+      const title = isAdjustment
+        ? `${capitalize(entry.type)} Entry`
+        : `${escapeHtml(entry.round || 'Event Result')}`;
+
+      return `
+        <div class="entry-detail-card ${isAdjustment ? 'adjustment' : ''}">
+          <div class="entry-detail-head">
+            <div class="entry-detail-title">${title}</div>
+            <div class="entry-detail-badge">${badge}</div>
+          </div>
+          <div class="entry-detail-grid">
+            ${cohorts.map(cohort => {
+              const placeText = isAdjustment
+                ? formatAdjustmentPoints(entry.points?.[cohort.key] || 0)
+                : `${escapeHtml(entry.places?.[cohort.key] || '-')}`;
+              const pointsText = `${entry.points?.[cohort.key] || 0} pts`;
+              const winnerClass = entry.places?.[cohort.key] === '1st' ? 'winner' : '';
+              return `
+                <div class="entry-detail-cell ${winnerClass}">
+                  C${cohort.shortLabel}
+                  <strong>${placeText}</strong>
+                  <span>${escapeHtml(pointsText)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${entry.note ? `<div class="entry-detail-note">${escapeHtml(entry.note)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderLeaderboard(totals) {
+      const ranked = [...(totals.cohorts || [])].sort((a, b) => b.total - a.total);
+      leaderboardList.innerHTML = ranked.map((cohort, index) => {
+        const config = cohorts.find(item => item.key === cohort.key) || cohorts[index];
+        const rankLabel = ['1st Place', '2nd Place', '3rd Place'][index] || '';
+        return `
+          <article class="leaderboard-card ${config.className}">
+            <div class="rank-icon"><i class="ti ${rankIcons[index]}"></i></div>
+            <div>
+              <div class="cohort-name">${config.label}</div>
+              <div class="rank-label">${rankLabel}</div>
+            </div>
+            <div class="leader-points">${cohort.total}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function hydrate(data) {
+      latestData = {
+        ...data,
+        entryState: data.entryState || { period5: {}, period6: {} },
+      };
+      renderTotals(latestData.totals);
+      renderBreakdown(latestData.breakdown);
+      renderLeaderboard(latestData.totals);
+      applyLoadedEventConfig(latestData.events);
+      if (!eventEditorDirty && !savingEventConfig) {
+        setEventEditorState(latestData.events);
+      }
+      if (activeType === 'score' && !formDirty) {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+      } else {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+      }
+      setSyncMessage('Live');
+    }
+
+    async function refreshData() {
+      try {
+        const data = await serverRun('getAppData');
+        hydrate(data);
+      } catch (error) {
+        setSyncMessage(getErrorMessage(error, 'Could not reach Google backend.'));
+      }
+    }
+
+    function populateEventSelects(options = {}) {
+      const {
+        preserveForm = false,
+      } = options;
+      const previousScoreEvent = eventSelect.value;
+      const previousAdjustmentEvent = adjustmentEvent.value;
+      const period5Events = loadedEventConfig.period5 || [];
+      const period6Events = loadedEventConfig.period6 || [];
+      const activeEvents = activePeriod === 'Period 5' ? period5Events : period6Events;
+      const allEvents = [...period5Events, ...period6Events];
+
+      if (!allEvents.length) {
+        eventSelect.innerHTML = '<option value="">Event list unavailable</option>';
+        adjustmentEvent.innerHTML = '<option value="">Event list unavailable</option>';
+        submitBtn.disabled = true;
+        showStatus('Event list could not be loaded. Please try again or check Settings.', false);
+        updateStickySaveBar();
+        return;
+      }
+
+      submitBtn.disabled = false;
+      if (statusBox.textContent === 'Event list could not be loaded. Please try again or check Settings.') {
+        statusBox.className = 'status';
+        statusBox.textContent = '';
+      }
+
+      eventSelect.innerHTML = activeEvents
+        .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
+        .join('');
+      adjustmentEvent.innerHTML = allEvents
+        .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
+        .join('');
+
+      if (activeEvents.includes(previousScoreEvent)) {
+        eventSelect.value = previousScoreEvent;
+      }
+      if (!eventSelect.value && activeEvents.length) {
+        eventSelect.value = activeEvents[0];
+      }
+
+      if (allEvents.includes(previousAdjustmentEvent)) {
+        adjustmentEvent.value = previousAdjustmentEvent;
+      }
+      if (!adjustmentEvent.value && allEvents.length) {
+        adjustmentEvent.value = allEvents[0];
+      }
+
+      eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
+      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
+      roundSelect.required = activePeriod === 'Period 5';
+
+      // Live polling should refresh dropdown contents and saved-state UI, but it must never
+      // clobber unsaved score-entry selections, note text, or the user's current round/event.
+      if (preserveForm) {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+        return;
+      }
+
+      syncScoreFormWithSelection();
+    }
+
+    function updatePeriodButtons() {
+      document.querySelectorAll('.segment-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.period === activePeriod);
+      });
+    }
+
+    function getCurrentScoreSelection() {
+      return {
+        period: activePeriod,
+        eventName: eventSelect.value || '',
+        round: roundSelect.value || roundOptions[0],
+      };
+    }
+
+    function isSameScoreSelection(left, right) {
+      const leftSelection = left || {};
+      const rightSelection = right || {};
+      return leftSelection.period === rightSelection.period
+        && leftSelection.eventName === rightSelection.eventName
+        && (leftSelection.period !== 'Period 5' || leftSelection.round === rightSelection.round);
+    }
+
+    function getEventListForPeriod(period) {
+      return period === 'Period 5'
+        ? (loadedEventConfig.period5 || [])
+        : (loadedEventConfig.period6 || []);
+    }
+
+    function normalizeScoreSelection(selection) {
+      const period = selection && selection.period === 'Period 6' ? 'Period 6' : 'Period 5';
+      const events = getEventListForPeriod(period);
+      const fallbackEvent = events[0] || '';
+      const requestedEvent = selection && selection.eventName ? selection.eventName : fallbackEvent;
+      return {
+        period,
+        eventName: events.includes(requestedEvent) ? requestedEvent : fallbackEvent,
+        round: roundOptions.includes(selection && selection.round) ? selection.round : roundOptions[0],
+      };
+    }
+
+    function restoreScoreSelection(selection, options = {}) {
+      const {
+        preserveForm = true,
+        syncForm = false,
+      } = options;
+      const nextSelection = normalizeScoreSelection(selection);
+
+      suppressScoreSelectionGuard = true;
+      activePeriod = nextSelection.period;
+      updatePeriodButtons();
+      populateEventSelects({ preserveForm: true });
+
+      if (nextSelection.eventName && getEventListForPeriod(nextSelection.period).includes(nextSelection.eventName)) {
+        eventSelect.value = nextSelection.eventName;
+      }
+      roundSelect.value = nextSelection.round;
+      suppressScoreSelectionGuard = false;
+
+      if (syncForm) {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+        return;
+      }
+
+      if (preserveForm) {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+      }
+    }
+
+    function getSavedStateKeyForSelection(selection) {
+      const normalized = normalizeScoreSelection(selection);
+      const savedState = normalized.period === 'Period 5'
+        ? getSavedRoundState((getCurrentEntryState().period5[normalized.eventName] || { savedRounds: {} }), normalized.round)
+        : (() => {
+          const eventState = getCurrentEntryState().period6[normalized.eventName];
+          return eventState && eventState.saved ? eventState : createBlankScoreState();
+        })();
+
+      if (!savedState.saved || !normalized.eventName) {
+        return '';
+      }
+
+      return [
+        normalized.period,
+        normalized.eventName,
+        normalized.period === 'Period 5' ? normalized.round : '',
+      ].join('::');
+    }
+
+    function scorePlacementsMatchForm(scoreState) {
+      return Object.entries(placeFieldIds).every(([cohortKey, fieldId]) => {
+        return document.getElementById(fieldId).value === (scoreState.places[cohortKey] || '');
+      });
+    }
+
+    function maybeConfirmDiscardChanges() {
+      if (activeType !== 'score' || !formDirty) {
+        return true;
+      }
+
+      if (window.confirm('You have unsaved changes for this round. Switching will discard them. Continue?')) {
+        return true;
+      }
+
+      restoreScoreSelection(selectionState, { preserveForm: true });
+      return false;
+    }
+
+    function attemptScoreSelectionChange(nextSelection) {
+      const normalizedSelection = normalizeScoreSelection(nextSelection);
+      if (isSameScoreSelection(selectionState, normalizedSelection)) {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+        return;
+      }
+
+      if (!maybeConfirmDiscardChanges()) {
+        return;
+      }
+
+      confirmedSavedEditKey = '';
+      restoreScoreSelection(normalizedSelection, { syncForm: true });
+    }
+
+    function setEntryType(type) {
+      activeType = type;
+      document.querySelectorAll('.type-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.type === type);
+      });
+      scoreFields.classList.toggle('hidden', type !== 'score');
+      adjustmentFields.classList.toggle('hidden', type === 'score');
+      noteInput.required = type !== 'score';
+      adjustmentPoints.required = type !== 'score';
+      if (type === 'score') {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+      } else {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+      }
+      updateLayoutMetrics();
+    }
+
+    function updatePlaceOptions() {
+      const selected = [...document.querySelectorAll('.place-select')]
+        .map(select => select.value)
+        .filter(Boolean);
+
+      document.querySelectorAll('.place-select').forEach(select => {
+        [...select.options].forEach(option => {
+          option.disabled = option.value && option.value !== select.value && selected.includes(option.value);
+        });
+        select.closest('.cohort-box').classList.toggle('place-selected', Boolean(select.value));
+      });
+
+      document.querySelectorAll('.place-btn').forEach(button => {
+        const select = document.getElementById(button.dataset.target);
+        const isSelected = select.value === button.dataset.place;
+        button.classList.toggle('selected', isSelected);
+        button.disabled = !isSelected && selected.includes(button.dataset.place);
+      });
+    }
+
+    function showStatus(message, good) {
+      statusBox.textContent = message;
+      statusBox.className = `status ${good ? 'good' : 'bad'}`;
+      stickySaveState = good ? 'good' : 'bad';
+      stickySaveMessage = message;
+      updateStickySaveBar();
+    }
+
+    function setStickySaveStatus(message, state = 'idle') {
+      stickySaveState = state;
+      stickySaveMessage = message;
+      updateStickySaveBar();
+    }
+
+    function clearAdjustmentFormAfterSubmit() {
+      adjustmentPoints.value = '';
+      adjustmentPreset.value = '';
+      noteInput.value = '';
+    }
+
+    function handlePlaceButtonClick(event) {
+      const button = event.currentTarget;
+      const select = document.getElementById(button.dataset.target);
+      select.value = select.value === button.dataset.place ? '' : button.dataset.place;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function buildPayload() {
+      if (activeType === 'score') {
+        return {
+          type: 'score',
+          period: activePeriod,
+          eventName: eventSelect.value,
+          round: activePeriod === 'Period 5' ? roundSelect.value : '',
+          places: {
+            cohort10: document.getElementById('place10').value,
+            cohort11: document.getElementById('place11').value,
+            cohort12: document.getElementById('place12').value,
+          },
+          note: noteInput.value,
+        };
+      }
+
+      return {
+        type: activeType,
+        period: (loadedEventConfig.period5 || []).includes(adjustmentEvent.value) ? 'Period 5' : 'Period 6',
+        eventName: adjustmentEvent.value,
+        cohortKey: document.getElementById('adjustmentCohort').value,
+        points: Number(adjustmentPoints.value),
+        note: noteInput.value,
+      };
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      submitBtn.disabled = true;
+      statusBox.className = 'status';
+      setStickySaveStatus('Saving…', 'saving');
+
+      try {
+        const result = await serverRun('logScore', buildPayload());
+        hydrate({
+          totals: result.totals,
+          breakdown: result.breakdown,
+          entryState: result.entryState,
+          events: result.events || loadedEventConfig,
+        });
+        if (activeType !== 'score') {
+          clearAdjustmentFormAfterSubmit();
+        } else {
+          syncScoreFormWithSelection({ preserveExpandedState: true });
+        }
+        formDirty = false;
+        showStatus('Saved. Running totals updated.', true);
+      } catch (error) {
+        showStatus(getErrorMessage(error, 'Could not save this entry.'), false);
+      } finally {
+        submitBtn.disabled = false;
+        updateStickySaveBar();
+      }
+    }
+
+    function cloneEvents(events) {
+      return {
+        period5: Array.isArray(events && events.period5) ? [...events.period5] : [],
+        period6: Array.isArray(events && events.period6) ? [...events.period6] : [],
+      };
+    }
+
+    function applyLoadedEventConfig(events) {
+      loadedEventConfig = cloneEvents(events);
+      populateEventSelects({ preserveForm: formDirty });
+    }
+
+    function setEventEditorState(events) {
+      eventEditorState = cloneEvents(events);
+      eventEditorDirty = false;
+      renderEventEditor();
+    }
+
+    function renderEventEditor() {
+      renderEventRows(period5EventList, eventEditorState.period5, 'period5');
+      renderEventRows(period6EventList, eventEditorState.period6, 'period6');
+    }
+
+    function renderEventRows(container, events, periodKey) {
+      if (!events.length) {
+        container.innerHTML = '<div class="empty-state">No events yet. Add one below.</div>';
+        return;
+      }
+
+      container.innerHTML = events.map((eventName, index) => `
+        <div class="event-row" data-period-key="${periodKey}" data-index="${index}">
+          <input
+            type="text"
+            value="${escapeAttribute(eventName)}"
+            data-role="event-name"
+            data-period-key="${periodKey}"
+            data-index="${index}"
+            placeholder="Event name"
+          >
+          <div class="event-row-controls">
+            <button class="event-action-btn" type="button" data-action="up" data-period-key="${periodKey}" data-index="${index}" ${index === 0 ? 'disabled' : ''}>Up</button>
+            <button class="event-action-btn" type="button" data-action="down" data-period-key="${periodKey}" data-index="${index}" ${index === events.length - 1 ? 'disabled' : ''}>Down</button>
+            <button class="event-action-btn" type="button" data-action="delete" data-period-key="${periodKey}" data-index="${index}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function markEventEditorDirty() {
+      eventEditorDirty = true;
+      if (eventStatusBox.className !== 'status') {
+        eventStatusBox.className = 'status';
+        eventStatusBox.textContent = '';
+      }
+    }
+
+    function mutateEventList(periodKey, mutator) {
+      const next = cloneEvents(eventEditorState);
+      mutator(next[periodKey]);
+      eventEditorState = next;
+      markEventEditorDirty();
+      renderEventEditor();
+    }
+
+    function addEventRow(periodKey) {
+      mutateEventList(periodKey, list => {
+        list.push('');
+      });
+    }
+
+    function moveEvent(periodKey, index, direction) {
+      mutateEventList(periodKey, list => {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= list.length) {
+          return;
+        }
+
+        const currentValue = list[index];
+        list[index] = list[targetIndex];
+        list[targetIndex] = currentValue;
+      });
+    }
+
+    function deleteEvent(periodKey, index) {
+      mutateEventList(periodKey, list => {
+        list.splice(index, 1);
+      });
+    }
+
+    function updateEventName(periodKey, index, value) {
+      const next = cloneEvents(eventEditorState);
+      next[periodKey][index] = value;
+      eventEditorState = next;
+      markEventEditorDirty();
+    }
+
+    function validateEventEditorState() {
+      const period5 = eventEditorState.period5.map(name => name.trim());
+      const period6 = eventEditorState.period6.map(name => name.trim());
+      const allEvents = [...period5, ...period6];
+
+      if (!period5.length) {
+        throw new Error('Add at least one Period 5 event before saving.');
+      }
+
+      if (!period6.length) {
+        throw new Error('Add at least one Period 6 event before saving.');
+      }
+
+      if (allEvents.some(name => !name)) {
+        throw new Error('Event names cannot be blank.');
+      }
+
+      const seen = new Set();
+      for (const name of allEvents) {
+        const key = name.toLowerCase();
+        if (seen.has(key)) {
+          throw new Error('Event names must be unique.');
+        }
+        seen.add(key);
+      }
+
+      return { period5, period6 };
+    }
+
+    async function handleSaveEvents() {
+      eventStatusBox.className = 'status';
+      saveEventsBtn.disabled = true;
+
+      try {
+        const payload = validateEventEditorState();
+        savingEventConfig = true;
+        const result = await serverRun('saveEventConfig', payload);
+        hydrate(result);
+        eventStatusBox.textContent = result.message || 'Event list saved.';
+        eventStatusBox.className = 'status good';
+      } catch (error) {
+        eventStatusBox.textContent = getErrorMessage(error, 'Could not save the event list.');
+        eventStatusBox.className = 'status bad';
+      } finally {
+        savingEventConfig = false;
+        saveEventsBtn.disabled = false;
+      }
+    }
+
+    async function handleOpenSheet() {
+      openSheetBtn.disabled = true;
+      sheetStatusBox.className = 'status';
+
+      try {
+        const url = await serverRun('getSpreadsheetUrl');
+        window.open(url, '_blank');
+      } catch (error) {
+        sheetStatusBox.textContent = getErrorMessage(error, 'Could not open the Google Sheet.');
+        sheetStatusBox.className = 'status bad';
+      } finally {
+        openSheetBtn.disabled = false;
+      }
+    }
+
+    function triggerSecretEvent() {
+      if (!confirm('Are you sure? This is dark magic.')) {
+        return;
+      }
+
+      alert('Ok you degenerate.');
+
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes secretHotDogFall {
+          from { transform: translateY(-80px) rotate(0deg); opacity: 1; }
+          to { transform: translateY(calc(100vh + 90px)) rotate(360deg); opacity: 0.95; }
+        }
+
+        @keyframes secretHotDogRise {
+          0% { transform: translate(-50%, 120vh) rotate(-16deg); opacity: 1; }
+          82% { transform: translate(-50%, -120vh) rotate(16deg); opacity: 1; }
+          100% { transform: translate(-50%, -130vh) rotate(20deg); opacity: 0; }
+        }
+      `;
+
+      const overlay = document.createElement('div');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.zIndex = '9999';
+      overlay.style.overflow = 'hidden';
+      overlay.style.background = '#000000';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 400ms ease';
+      overlay.style.pointerEvents = 'none';
+
+      for (let index = 0; index < 30; index += 1) {
+        const hotDog = document.createElement('div');
+        hotDog.textContent = '🌭';
+        hotDog.style.position = 'absolute';
+        hotDog.style.top = '-80px';
+        hotDog.style.left = `${Math.random() * 100}%`;
+        hotDog.style.fontSize = `${28 + Math.random() * 24}px`;
+        hotDog.style.animationName = 'secretHotDogFall';
+        hotDog.style.animationDelay = `${Math.random() * 2000}ms`;
+        hotDog.style.animationDuration = `${1500 + Math.random() * 1000}ms`;
+        hotDog.style.animationTimingFunction = 'linear';
+        hotDog.style.animationFillMode = 'forwards';
+        overlay.appendChild(hotDog);
+      }
+
+      const giantHotDog = document.createElement('div');
+      giantHotDog.textContent = '🌭';
+      giantHotDog.style.position = 'absolute';
+      giantHotDog.style.left = '50%';
+      giantHotDog.style.bottom = '0';
+      giantHotDog.style.fontSize = '120px';
+      giantHotDog.style.lineHeight = '1';
+      giantHotDog.style.animation = 'secretHotDogRise 2500ms ease-in forwards';
+      overlay.appendChild(giantHotDog);
+
+      document.head.appendChild(style);
+      document.body.appendChild(overlay);
+
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '0.92';
+      });
+
+      window.setTimeout(() => {
+        overlay.style.transition = 'opacity 500ms ease';
+        overlay.style.opacity = '0';
+      }, 4000);
+
+      window.setTimeout(() => {
+        overlay.remove();
+        style.remove();
+      }, 4500);
+    }
+
+    function getCurrentEntryState() {
+      const fallback = { period5: {}, period6: {} };
+      return latestData && latestData.entryState ? latestData.entryState : fallback;
+    }
+
+    function createBlankScoreState() {
+      return {
+        saved: false,
+        note: '',
+        places: {
+          cohort10: '',
+          cohort11: '',
+          cohort12: '',
+        },
+      };
+    }
+
+    function getSavedRoundState(eventState, round) {
+      const savedRound = eventState && eventState.savedRounds ? eventState.savedRounds[round] : null;
+      return savedRound && savedRound.saved ? savedRound : createBlankScoreState();
+    }
+
+    function getSelectedScoreState() {
+      const entryState = getCurrentEntryState();
+      if (activePeriod === 'Period 5') {
+        const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
+        return getSavedRoundState(eventState, roundSelect.value);
+      }
+
+      const eventState = entryState.period6[eventSelect.value];
+      return eventState && eventState.saved ? eventState : createBlankScoreState();
+    }
+
+    function applyScoreStateToForm(scoreState) {
+      const nextState = scoreState && scoreState.saved ? scoreState : createBlankScoreState();
+      Object.entries(placeFieldIds).forEach(([cohortKey, fieldId]) => {
+        document.getElementById(fieldId).value = nextState.places[cohortKey] || '';
+      });
+      noteInput.value = nextState.note || '';
+      updatePlaceOptions();
+    }
+
+    function syncScoreFormWithSelection(options = {}) {
+      if (activeType !== 'score') {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+        return;
+      }
+
+      if (!options.preserveExpandedState) {
+        savedStateExpanded = false;
+      }
+
+      applyScoreStateToForm(getSelectedScoreState());
+      formDirty = false;
+      selectionState = getCurrentScoreSelection();
+      confirmedSavedEditKey = '';
+      stickySaveState = 'idle';
+      stickySaveMessage = '';
+      renderSavedStatePanel();
+      updateStickySaveBar();
+    }
+
+    function getScoreSelectionLabel() {
+      const eventName = eventSelect.value || 'Select an event';
+      const roundText = activePeriod === 'Period 5' ? ` • ${roundSelect.value}` : '';
+      return `${eventName}${roundText}`;
+    }
+
+    function getCurrentSavedSummary() {
+      const entryState = getCurrentEntryState();
+      if (activeType !== 'score') {
+        return {
+          title: 'Adjustments save manually',
+          status: 'Penalty and bonus entries are not autosaved.',
+        };
+      }
+
+      if (activePeriod === 'Period 5') {
+        const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
+        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round] && eventState.savedRounds[round].saved).length;
+        const currentRoundSaved = Boolean(eventState.savedRounds && eventState.savedRounds[roundSelect.value] && eventState.savedRounds[roundSelect.value].saved);
+        return {
+          title: getScoreSelectionLabel(),
+          status: currentRoundSaved
+            ? `${roundSelect.value} is already saved for this station.`
+            : savedCount
+              ? `${savedCount} of 4 rounds saved for this station.`
+              : 'No rounds saved yet for this station.',
+        };
+      }
+
+      const eventState = entryState.period6[eventSelect.value] || { saved: false };
+      return {
+        title: getScoreSelectionLabel(),
+        status: eventState.saved
+          ? 'This Period 6 event already has a saved result.'
+          : 'No saved result yet for this Period 6 event.',
+      };
+    }
+
+    function renderSavedStatePanel() {
+      savedStatePanel.innerHTML = '';
+      savedStatePanel.classList.remove('expanded');
+    }
+
+    function getStickySavePresentation() {
+      const nothingSelected = activeType === 'score'
+        ? !eventSelect.value
+        : !adjustmentEvent.value;
+      const summary = getCurrentSavedSummary();
+      const selectedScoreState = activeType === 'score' && eventSelect.value ? getSelectedScoreState() : createBlankScoreState();
+
+      if (stickySaveState === 'bad') {
+        return {
+          label: 'Save Failed',
+          labelClass: 'bad',
+          title: summary.title,
+          status: stickySaveMessage,
+          statusClass: 'bad',
+          buttonText: 'Save',
+        };
+      }
+
+      if (stickySaveState === 'saving') {
+        return {
+          label: 'Saving...',
+          labelClass: 'saving',
+          title: summary.title,
+          status: stickySaveMessage || 'Saving…',
+          statusClass: 'saving',
+          buttonText: 'Save',
+        };
+      }
+
+      if (activeType !== 'score') {
+        if (formDirty) {
+          return {
+            label: 'Unsaved Changes',
+            labelClass: 'pending',
+            title: summary.title,
+            status: 'Adjustment ready to save manually.',
+            statusClass: '',
+            buttonText: 'Save',
+          };
+        }
+
+        if (stickySaveState === 'good') {
+          return {
+            label: 'Saved',
+            labelClass: 'good',
+            title: summary.title,
+            status: stickySaveMessage,
+            statusClass: 'good',
+            buttonText: 'Save',
+          };
+        }
+
+        return {
+          label: 'Ready to Save',
+          labelClass: '',
+          title: nothingSelected ? 'Select an event' : summary.title,
+          status: nothingSelected ? 'Choose an adjustment, then save manually.' : summary.status,
+          statusClass: '',
+          buttonText: 'Save',
+        };
+      }
+
+      if (nothingSelected) {
+        return {
+          label: 'Ready to Save',
+          labelClass: '',
+          title: 'Select an event',
+          status: 'Choose placements, then save manually.',
+          statusClass: '',
+          buttonText: 'Save',
+        };
+      }
+
+      if (formDirty) {
+        return {
+          label: 'Unsaved Changes',
+          labelClass: 'pending',
+          title: summary.title,
+          status: 'Ready to save this round.',
+          statusClass: '',
+          buttonText: 'Save',
+        };
+      }
+
+      if (selectedScoreState.saved || stickySaveState === 'good') {
+        return {
+          label: 'Saved',
+          labelClass: 'good',
+          title: summary.title,
+          status: stickySaveMessage && stickySaveState === 'good' ? stickySaveMessage : summary.status,
+          statusClass: 'good',
+          buttonText: 'Save',
+        };
+      }
+
+      return {
+        label: 'Ready to Save',
+        labelClass: 'pending',
+        title: summary.title,
+        status: summary.status,
+        statusClass: '',
+        buttonText: 'Save',
+      };
+    }
+
+    function updateStickySaveBar() {
+      const onEntryView = document.getElementById('entryView').classList.contains('active');
+      stickySaveBar.classList.toggle('hidden', !onEntryView);
+
+      const presentation = getStickySavePresentation();
+      stickySaveLabel.className = `sticky-save-label${presentation.labelClass ? ` ${presentation.labelClass}` : ''}`;
+      stickySaveLabelText.textContent = presentation.label;
+      stickySaveTitle.textContent = presentation.title;
+      stickySaveStatus.className = `sticky-save-status${presentation.statusClass ? ` ${presentation.statusClass}` : ''}`;
+      stickySaveStatusText.textContent = presentation.status;
+      submitBtn.querySelector('span').textContent = presentation.buttonText;
+      updateLayoutMetrics();
+    }
+
+    function markFormDirtyAndRefresh() {
+      formDirty = true;
+      stickySaveState = 'idle';
+      stickySaveMessage = '';
+      updateStickySaveBar();
+    }
+
+    async function handleResetAllScores() {
+      const typedValue = window.prompt('Type RESET to clear all scores, penalties, bonuses, notes, and round results.');
+      if (typedValue === null) {
+        return;
+      }
+
+      if (typedValue !== 'RESET') {
+        sheetStatusBox.textContent = 'Reset cancelled. Type RESET exactly to continue.';
+        sheetStatusBox.className = 'status bad';
+        return;
+      }
+
+      resetScoresBtn.disabled = true;
+      sheetStatusBox.className = 'status';
+
+      try {
+        const result = await serverRun('resetAllScores');
+        hydrate(result);
+        if (activeType === 'score') {
+          syncScoreFormWithSelection({ preserveExpandedState: true });
+        } else {
+          formDirty = false;
+          clearAdjustmentFormAfterSubmit();
+          renderSavedStatePanel();
+          updateStickySaveBar();
+        }
+        sheetStatusBox.textContent = 'All scores reset. Event lists and settings were preserved.';
+        sheetStatusBox.className = 'status good';
+        statusBox.className = 'status';
+        statusBox.textContent = '';
+      } catch (error) {
+        sheetStatusBox.textContent = getErrorMessage(error, 'Could not reset scores.');
+        sheetStatusBox.className = 'status bad';
+      } finally {
+        resetScoresBtn.disabled = false;
+      }
+    }
+
+    function getWinnerLabel(entry) {
+      const winners = Array.isArray(entry.winners) ? entry.winners : [];
+      return winners.length ? `${winners.join(', ')} won` : 'Scored';
+    }
+
+    function formatAdjustmentPoints(points) {
+      if (!points) {
+        return '0';
+      }
+      return points > 0 ? `+${points}` : `${points}`;
+    }
+
+    function capitalize(value) {
+      const text = String(value || '');
+      return text ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : '';
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[character]));
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value);
+    }
+
+    document.querySelectorAll('.segment-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        if (button.dataset.period === activePeriod) {
+          return;
+        }
+
+        attemptScoreSelectionChange({
+          period: button.dataset.period,
+          eventName: '',
+          round: roundSelect.value,
+        });
+      });
+    });
+
+    document.querySelectorAll('.type-btn').forEach(button => {
+      button.addEventListener('click', () => setEntryType(button.dataset.type));
+    });
+
+    document.querySelectorAll('.place-select').forEach(select => {
+      select.addEventListener('change', () => {
+        const savedState = getSelectedScoreState();
+        const savedStateKey = getSavedStateKeyForSelection(getCurrentScoreSelection());
+
+        if (savedState.saved && savedStateKey && confirmedSavedEditKey !== savedStateKey && !scorePlacementsMatchForm(savedState)) {
+          const confirmed = window.confirm('You are changing the scores for this round. Are you sure?');
+          if (!confirmed) {
+            applyScoreStateToForm(savedState);
+            formDirty = false;
+            renderSavedStatePanel();
+            updateStickySaveBar();
+            return;
+          }
+          confirmedSavedEditKey = savedStateKey;
+        }
+
+        updatePlaceOptions();
+        markFormDirtyAndRefresh();
+      });
+    });
+
+    document.querySelectorAll('.place-btn').forEach(button => {
+      button.addEventListener('click', handlePlaceButtonClick);
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(item => item.classList.toggle('active', item === button));
+        document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === button.dataset.view));
+        updateStickySaveBar();
+      });
+    });
+
+    eventSelect.addEventListener('change', () => {
+      if (suppressScoreSelectionGuard || activeType !== 'score') {
+        updateStickySaveBar();
+        return;
+      }
+
+      attemptScoreSelectionChange(getCurrentScoreSelection());
+    });
+    roundSelect.addEventListener('change', () => {
+      if (suppressScoreSelectionGuard || activeType !== 'score') {
+        return;
+      }
+
+      attemptScoreSelectionChange(getCurrentScoreSelection());
+    });
+    noteInput.addEventListener('input', markFormDirtyAndRefresh);
+    adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
+    adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
+    document.getElementById('adjustmentCohort').addEventListener('change', markFormDirtyAndRefresh);
+
+    adjustmentPreset.addEventListener('change', () => {
+      if (adjustmentPreset.value) {
+        adjustmentPoints.value = adjustmentPreset.value;
+        if (adjustmentPreset.selectedOptions[0].dataset.type === 'penalty') {
+          setEntryType('penalty');
+        }
+      }
+      markFormDirtyAndRefresh();
+    });
+
+    savedStatePanel.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-saved-state-toggle]');
+      if (toggle) {
+        savedStateExpanded = !savedStateExpanded;
+        renderSavedStatePanel();
+        updateLayoutMetrics();
+        return;
+      }
+
+      const roundButton = event.target.closest('[data-round-jump]');
+      if (!roundButton) {
+        return;
+      }
+
+      roundSelect.value = roundButton.dataset.roundJump;
+      savedStateExpanded = false;
+      if (suppressScoreSelectionGuard || activeType !== 'score') {
+        syncScoreFormWithSelection({ preserveExpandedState: true });
+        return;
+      }
+
+      attemptScoreSelectionChange(getCurrentScoreSelection());
+    });
+
+    breakdownList.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-breakdown-toggle]');
+      if (!toggle) {
+        return;
+      }
+
+      const key = toggle.dataset.breakdownToggle;
+      if (expandedBreakdownEvents.has(key)) {
+        expandedBreakdownEvents.delete(key);
+      } else {
+        expandedBreakdownEvents.add(key);
+      }
+      renderBreakdown((latestData && latestData.breakdown) || []);
+    });
+
+    [period5EventList, period6EventList].forEach(container => {
+      container.addEventListener('click', event => {
+        const button = event.target.closest('[data-action]');
+        if (!button) {
+          return;
+        }
+
+        const periodKey = button.dataset.periodKey;
+        const index = Number(button.dataset.index);
+
+        if (button.dataset.action === 'up') {
+          moveEvent(periodKey, index, -1);
+        }
+
+        if (button.dataset.action === 'down') {
+          moveEvent(periodKey, index, 1);
+        }
+
+        if (button.dataset.action === 'delete') {
+          deleteEvent(periodKey, index);
+        }
+      });
+
+      container.addEventListener('input', event => {
+        if (event.target.dataset.role !== 'event-name') {
+          return;
+        }
+
+        updateEventName(event.target.dataset.periodKey, Number(event.target.dataset.index), event.target.value);
+      });
+    });
+
+    scoreForm.addEventListener('submit', handleSubmit);
+    openSheetBtn.addEventListener('click', handleOpenSheet);
+    resetScoresBtn.addEventListener('click', handleResetAllScores);
+    secretEventBtn.addEventListener('click', triggerSecretEvent);
+    addPeriod5EventBtn.addEventListener('click', () => addEventRow('period5'));
+    addPeriod6EventBtn.addEventListener('click', () => addEventRow('period6'));
+    saveEventsBtn.addEventListener('click', handleSaveEvents);
+    window.addEventListener('resize', updateLayoutMetrics);
+    window.addEventListener('orientationchange', updateLayoutMetrics);
+    window.addEventListener('load', updateLayoutMetrics);
+
+    roundSelect.innerHTML = roundOptions
+      .map(option => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
+      .join('');
+
+    renderEventEditor();
+    populateEventSelects();
+    updatePeriodButtons();
+    setEntryType('score');
+    updatePlaceOptions();
+    updateLayoutMetrics();
+    refreshData();
+    setInterval(refreshData, 5000);
+  </script>
+</body>
 </html>
