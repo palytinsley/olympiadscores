@@ -1,0 +1,966 @@
+<script>
+  const state = {
+    groups: [],
+    selectedGroupId: '',
+    selectedGroup: null,
+    periodFilter: 'All',
+    mode: 'grading',
+    spreadsheetUrl: '',
+    commentsCollapsed: false,
+    dirty: false,
+    changeVersion: 0,
+    commentTimers: {},
+    groupCommentTimer: null
+  };
+
+  const els = {};
+
+  const RUBRIC_CRITERIA = {
+    slideDesignScore: {
+      title: 'Slide Design & Visual Storytelling',
+      max: 6,
+      scope: 'Group Grade',
+      helper: 'Evaluate the group’s visual sequence, image quality, title/thesis slide, and the clarity of the shared story.',
+      bands: [
+        {
+          key: 'meets',
+          label: 'Meets',
+          score: 6,
+          cardText: '9-12 strong historical images in a clear narrative. Title and thesis are present; the visual story feels planned and collaborative.',
+          text: '9-12 high-resolution, historically relevant images arranged in a clear, logical order that creates a cohesive narrative. Title slide includes country name and thesis. Images are visually powerful and tell a compelling story without words. Clear the group practiced and planned together.'
+        },
+        {
+          key: 'approaching',
+          label: 'Approaching',
+          score: 4,
+          cardText: '9-12 mostly relevant images. Title and thesis are present; the order mostly works though some transitions could be smoother.',
+          text: '9-12 images, mostly high-quality and relevant. Title slide present with thesis. Mostly logical order though some transitions could be smoother.'
+        },
+        {
+          key: 'emerging',
+          label: 'Emerging',
+          score: 2,
+          cardText: 'Fewer images or uneven quality. Title/thesis elements may be missing; the sequence is only partly logical.',
+          text: 'Fewer than 9 images or some are low-resolution/irrelevant. Title slide missing key elements. Order is partially logical but flow is unclear or disjointed.'
+        },
+        {
+          key: 'needs-improvement',
+          label: 'Needs Improvement',
+          score: 0,
+          cardText: 'Few useful images, weak quality, or no clear narrative. Title or thesis is absent and the structure is hard to follow.',
+          text: 'Few images, poor quality, or no clear narrative. Title slide absent or missing thesis. Disorganized structure makes the story difficult to follow.'
+        }
+      ]
+    },
+    historicalContextScore: {
+      title: 'Historical Accuracy & Context',
+      max: 3,
+      scope: 'Individual',
+      helper: 'Score how well this student connects their photo and explanation to accurate historical context and the thesis.',
+      bands: [
+        {
+          key: 'meets',
+          label: 'Meets',
+          score: 3,
+          cardText: 'Key historical moments clearly support the thesis with strong context, chronology, and significance.',
+          text: 'Photos clearly represent key historical moments that directly support the thesis. Deep understanding of context, chronology, and significance.'
+        },
+        {
+          key: 'approaching',
+          label: 'Approaching',
+          score: 2,
+          cardText: 'Major moments are mostly accurate and connected, though some context or details are underdeveloped.',
+          text: 'Key moments are covered and mostly support the thesis. Some events may be missing or underdeveloped.'
+        },
+        {
+          key: 'emerging',
+          label: 'Emerging',
+          score: 1,
+          cardText: 'Connections to the thesis are loose. Context is thin, incomplete, or includes some inaccuracies.',
+          text: 'Historical moments are loosely connected to the thesis or lack context. Some inaccuracies or gaps in coverage.'
+        },
+        {
+          key: 'needs-improvement',
+          label: 'Needs Improvement',
+          score: 0,
+          cardText: 'Little thesis connection. Key events are missing, inaccurate, or not historically grounded.',
+          text: 'Little to no connection to the thesis. Key events missing, inaccurate, or not historically grounded.'
+        }
+      ]
+    },
+    presentationSkillsScore: {
+      title: 'Presentation Skills',
+      max: 6,
+      scope: 'Individual',
+      helper: 'Score this student’s preparation, clarity, confidence, photo explanation, and thesis connection.',
+      bands: [
+        {
+          key: 'meets',
+          label: 'Meets',
+          score: 6,
+          cardText: 'Clear, confident, and prepared. Explains the photo, context, and thesis connection with polish.',
+          text: 'Well-prepared, speaks clearly, maintains eye contact, and engages the audience. Explains what photo shows, provides historical context, and connects to thesis. Confident and polished.'
+        },
+        {
+          key: 'approaching',
+          label: 'Approaching',
+          score: 4,
+          cardText: 'Prepared but uneven. Covers most required points with some reliance on notes or less confidence.',
+          text: 'Prepared but may lack full confidence or engagement. Covers most required points (photo description, context, thesis connection) with some reliance on notes.'
+        },
+        {
+          key: 'emerging',
+          label: 'Emerging',
+          score: 2,
+          cardText: 'Some preparation is evident, but delivery is inconsistent or missing description, context, or analysis.',
+          text: 'Some preparation evident but delivery is inconsistent. Missing one or more required elements (description, context, or analysis). Frequent use of notes or low volume.'
+        },
+        {
+          key: 'needs-improvement',
+          label: 'Needs Improvement',
+          score: 0,
+          cardText: 'Unprepared or mostly reading from notes. Multiple required elements are missing.',
+          text: 'Unprepared. Reads directly from notes. Missing multiple required elements. Difficulty engaging the audience.'
+        }
+      ]
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  function init() {
+    cacheElements();
+    renderPerformanceCards(document.getElementById('slideDesignBands'), 'slideDesignScore');
+    bindEvents();
+    setSaveState('Loading...');
+    loadAppData();
+  }
+
+  function cacheElements() {
+    [
+      'summaryPercent', 'summaryProgressRing', 'summaryGroupCount',
+      'groupList', 'groupJump', 'periodLabel', 'countryTitle', 'studentLine',
+      'studentNavPills', 'gradingActions', 'saveState', 'prevGroupBtn', 'nextGroupBtn', 'nextUngradedBtn',
+      'errorBox', 'gradingContent', 'emptyState', 'groupStatus',
+      'slideDesignScore', 'groupComment', 'slideLinks', 'studentList',
+      'toggleCommentsBtn', 'settingsBtn', 'settingsMenu', 'openSpreadsheetLink',
+      'schoologyModeBtn', 'gradingModeBtn', 'schoologyContent', 'schoologyList', 'toast'
+    ].forEach(id => els[id] = document.getElementById(id));
+  }
+
+  function bindEvents() {
+    document.querySelectorAll('.filter-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        flushPendingCommentSaves();
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        state.periodFilter = button.dataset.period;
+        loadAppData();
+      });
+    });
+
+    els.groupJump.addEventListener('change', event => selectGroup(event.target.value));
+    els.prevGroupBtn.addEventListener('click', () => moveGroup(-1));
+    els.nextGroupBtn.addEventListener('click', () => moveGroup(1));
+    els.nextUngradedBtn.addEventListener('click', selectNextUngraded);
+    els.slideDesignScore.addEventListener('change', handleGroupManualScoreChange);
+    els.slideDesignScore.addEventListener('keydown', blurOnEnter);
+    els.groupComment.addEventListener('input', debounceGroupComment);
+    els.groupComment.addEventListener('blur', saveGroupCommentNow);
+    els.toggleCommentsBtn.addEventListener('click', toggleComments);
+    els.settingsBtn.addEventListener('click', toggleSettingsMenu);
+    els.openSpreadsheetLink.addEventListener('click', handleOpenSpreadsheet);
+    els.schoologyModeBtn.addEventListener('click', enterSchoologyMode);
+    els.gradingModeBtn.addEventListener('click', returnToGradingMode);
+    els.schoologyList.addEventListener('click', handleSchoologyCopyClick);
+
+    window.addEventListener('beforeunload', event => {
+      if (!state.dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeSettingsMenu();
+      if (state.mode !== 'grading') return;
+      if (event.target.matches('textarea, input, select, button')) return;
+      if (event.key === 'ArrowRight') moveGroup(1);
+      if (event.key === 'ArrowLeft') moveGroup(-1);
+    });
+
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.settings-menu-wrap')) closeSettingsMenu();
+    });
+  }
+
+  function loadAppData() {
+    clearError();
+    google.script.run
+      .withSuccessHandler(response => {
+        if (!response.ok) return showError(response.message);
+        state.groups = response.groups || [];
+        state.spreadsheetUrl = response.spreadsheetUrl || state.spreadsheetUrl;
+        updateSpreadsheetLink();
+        renderSummary(response.summary);
+        renderGroupNav();
+        setSaveState('Saved');
+
+        if (state.mode === 'schoology') return;
+
+        const stillAvailable = state.groups.some(group => group.groupId === state.selectedGroupId);
+        if (state.groups.length && (!state.selectedGroupId || !stillAvailable)) {
+          selectGroup(state.groups[0].groupId);
+        } else if (!state.groups.length) {
+          renderEmpty('No groups match this filter.');
+        }
+      })
+      .withFailureHandler(error => showError(error.message || String(error)))
+      .getAppData(state.periodFilter);
+  }
+
+  function selectGroup(groupId) {
+    if (!groupId) return;
+    flushPendingCommentSaves();
+    clearError();
+    state.selectedGroupId = groupId;
+    markActiveGroup();
+    setSaveState('Loading...');
+
+    google.script.run
+      .withSuccessHandler(response => {
+        if (!response.ok) return showError(response.message);
+        state.selectedGroup = response.group;
+        state.dirty = false;
+        if (state.mode === 'schoology') {
+          setSaveState('Saved');
+          return;
+        }
+        renderGroupDetails();
+        resetGradingScroll();
+        setSaveState('Saved');
+      })
+      .withFailureHandler(error => showError(error.message || String(error)))
+      .getGroupDetails(groupId);
+  }
+
+  function renderSummary(summary) {
+    summary = summary || {};
+    const total = Number(summary.total) || 0;
+    const complete = Number(summary.complete) || 0;
+    const percent = total ? Math.round((complete / total) * 100) : 0;
+    const circumference = 2 * Math.PI * 28;
+
+    els.summaryPercent.textContent = `${percent}%`;
+    els.summaryGroupCount.textContent = `${complete}/${total} Groups`;
+    els.summaryProgressRing.style.strokeDasharray = String(circumference);
+    els.summaryProgressRing.style.strokeDashoffset = String(circumference - (percent / 100) * circumference);
+  }
+
+  function renderGroupNav() {
+    els.groupList.innerHTML = '';
+    els.groupJump.innerHTML = '';
+
+    state.groups.forEach(group => {
+      const option = document.createElement('option');
+      option.value = group.groupId;
+      option.textContent = `${group.country || 'Unnamed country'} - ${formatPeriod(group.period, true)}`;
+      els.groupJump.appendChild(option);
+
+      const button = document.createElement('button');
+      button.className = 'group-item';
+      button.dataset.groupId = group.groupId;
+      button.innerHTML = `
+        <strong>${escapeHtml(group.country || 'Unnamed country')}</strong>
+        <span class="group-meta">
+          <span>${escapeHtml(formatPeriod(group.period))} · ${group.studentCount || 0} students</span>
+          <span class="status-badge" data-status="${escapeHtml(group.status)}">${escapeHtml(group.status)}</span>
+        </span>
+      `;
+      button.addEventListener('click', () => selectGroup(group.groupId));
+      els.groupList.appendChild(button);
+    });
+
+    markActiveGroup();
+  }
+
+  function markActiveGroup() {
+    document.querySelectorAll('.group-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.groupId === state.selectedGroupId);
+    });
+    if (state.selectedGroupId) els.groupJump.value = state.selectedGroupId;
+  }
+
+  function renderGroupDetails() {
+    const group = state.selectedGroup;
+    if (!group) return renderEmpty('Choose a country group.');
+
+    els.emptyState.classList.add('hidden');
+    els.gradingContent.classList.remove('hidden');
+    els.periodLabel.textContent = formatPeriod(group.period);
+    els.countryTitle.textContent = group.country || 'Unnamed country';
+    els.studentLine.textContent = `${group.students.length} student${group.students.length === 1 ? '' : 's'} · Group ID ${group.groupId}`;
+    els.groupStatus.textContent = group.status;
+    els.groupStatus.dataset.status = group.status;
+    els.slideDesignScore.value = valueForSelect(group.slideDesignScore);
+    els.groupComment.value = group.groupComment || '';
+    syncRubricControl(els.slideDesignScore.closest('.rubric-card'), 'slideDesignScore');
+
+    renderSlideLinks(group.slideLinks || []);
+    renderStudents(group.students || []);
+    renderStudentNavPills(group.students || []);
+    markActiveGroup();
+  }
+
+  function enterSchoologyMode() {
+    flushPendingCommentSaves();
+    closeSettingsMenu();
+    state.mode = 'schoology';
+    document.body.classList.add('schoology-mode');
+    updateSettingsMode();
+    clearError();
+    els.periodLabel.textContent = 'Schoology mode';
+    els.countryTitle.textContent = 'Schoology copy view';
+    els.studentLine.textContent = 'Read-only final scores and comments.';
+    els.studentNavPills.classList.add('hidden');
+    els.gradingContent.classList.add('hidden');
+    els.emptyState.classList.add('hidden');
+    els.schoologyContent.classList.remove('hidden');
+    els.schoologyList.innerHTML = '<div class="notice">Loading Schoology copy view...</div>';
+    loadSchoologyData();
+  }
+
+  function returnToGradingMode() {
+    closeSettingsMenu();
+    state.mode = 'grading';
+    document.body.classList.remove('schoology-mode');
+    updateSettingsMode();
+    els.schoologyContent.classList.add('hidden');
+    if (state.selectedGroup) {
+      renderGroupDetails();
+    } else {
+      renderEmpty('Choose a country group.');
+    }
+  }
+
+  function loadSchoologyData() {
+    google.script.run
+      .withSuccessHandler(response => {
+        if (!response.ok) return showError(response.message);
+        state.spreadsheetUrl = response.spreadsheetUrl || state.spreadsheetUrl;
+        updateSpreadsheetLink();
+        renderSchoologyView(response.periods || []);
+      })
+      .withFailureHandler(error => showError(error.message || String(error)))
+      .getSchoologyData();
+  }
+
+  function renderSchoologyView(periods) {
+    els.schoologyList.innerHTML = '';
+    if (!periods.length) {
+      els.schoologyList.innerHTML = '<div class="notice">No student rows were found.</div>';
+      return;
+    }
+
+    periods.forEach(period => {
+      const section = document.createElement('section');
+      section.className = 'schoology-period';
+      const students = period.students || [];
+      section.innerHTML = `
+        <div class="schoology-period-head">
+          <h4>${escapeHtml(period.label)}</h4>
+          <span>${students.length} student${students.length === 1 ? '' : 's'}</span>
+        </div>
+        <div class="schoology-students">
+          ${students.length ? students.map(schoologyStudentHtml).join('') : '<p class="schoology-empty">No students in this period.</p>'}
+        </div>
+      `;
+      els.schoologyList.appendChild(section);
+    });
+  }
+
+  function schoologyStudentHtml(student) {
+    const total = student.totalScore === '' || student.totalScore === null || typeof student.totalScore === 'undefined'
+      ? '-'
+      : escapeHtml(student.totalScore);
+    const finalComment = student.finalComment || '';
+    const disabled = finalComment ? '' : 'disabled';
+    return `
+      <article class="schoology-student">
+        <div class="schoology-student-head">
+          <h5>${escapeHtml(student.name || 'Unnamed student')}</h5>
+          <div class="schoology-student-actions">
+            <button class="copy-comment-btn" type="button" data-copy-comment="${escapeAttribute(finalComment)}" ${disabled}>
+              <i class="ti ti-copy" aria-hidden="true"></i> Copy comment
+            </button>
+            <strong>${total}/15</strong>
+          </div>
+        </div>
+        <pre>${escapeHtml(finalComment)}</pre>
+      </article>
+    `;
+  }
+
+  function handleSchoologyCopyClick(event) {
+    const button = event.target.closest('[data-copy-comment]');
+    if (!button) return;
+    const comment = button.dataset.copyComment || '';
+    if (!comment) {
+      showToast('No comment to copy.');
+      return;
+    }
+
+    copyTextToClipboard(comment)
+      .then(() => {
+        button.classList.add('copied');
+        button.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Copied';
+        showToast('Comment copied.');
+        clearTimeout(button.copyTimer);
+        button.copyTimer = setTimeout(() => {
+          button.classList.remove('copied');
+          button.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copy comment';
+        }, 1600);
+      })
+      .catch(() => showToast('Could not copy comment.'));
+  }
+
+  function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return copied ? Promise.resolve() : Promise.reject(new Error('Copy failed'));
+    } catch (err) {
+      document.body.removeChild(textarea);
+      return Promise.reject(err);
+    }
+  }
+
+  function toggleSettingsMenu(event) {
+    event.stopPropagation();
+    const isOpen = !els.settingsMenu.classList.contains('hidden');
+    els.settingsMenu.classList.toggle('hidden', isOpen);
+    els.settingsBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+  }
+
+  function closeSettingsMenu() {
+    els.settingsMenu.classList.add('hidden');
+    els.settingsBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function updateSettingsMode() {
+    els.schoologyModeBtn.classList.toggle('hidden', state.mode === 'schoology');
+    els.gradingModeBtn.classList.toggle('hidden', state.mode !== 'schoology');
+  }
+
+  function updateSpreadsheetLink() {
+    if (!state.spreadsheetUrl) return;
+    els.openSpreadsheetLink.href = state.spreadsheetUrl;
+  }
+
+  function handleOpenSpreadsheet(event) {
+    if (state.spreadsheetUrl) {
+      closeSettingsMenu();
+      return;
+    }
+    event.preventDefault();
+    showToast('Spreadsheet link is still loading.');
+  }
+
+  function renderStudentNavPills(students) {
+    els.studentNavPills.innerHTML = '';
+    els.studentNavPills.classList.toggle('hidden', !students.length);
+
+    students.forEach(student => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'student-nav-pill';
+      button.dataset.status = student.status;
+      button.dataset.rowNumber = student.rowNumber;
+      button.innerHTML = `${student.status === 'Complete' ? '<i class="ti ti-check" aria-hidden="true"></i>' : ''}<span>${escapeHtml(shortStudentName(student.name))}</span>`;
+      button.addEventListener('click', () => jumpToStudent(student.rowNumber));
+      els.studentNavPills.appendChild(button);
+    });
+  }
+
+  function shortStudentName(name) {
+    const clean = String(name || 'Student').trim();
+    return clean.split(/\s+/)[0] || 'Student';
+  }
+
+  function formatPeriod(period, compact) {
+    const clean = String(period || '').trim();
+    if (!clean) return compact ? 'P?' : 'Period ?';
+    const value = clean.replace(/^P(?:eriod)?\s*/i, '').trim();
+    return compact ? `P${value}` : `Period ${value}`;
+  }
+
+  function jumpToStudent(rowNumber) {
+    const target = document.querySelector(`.student-card[data-row-number="${rowNumber}"]`);
+    if (!target) return;
+    const top = target.getBoundingClientRect().top + window.pageYOffset - 120;
+    window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'instant' });
+    document.querySelectorAll('.student-card.jump-highlight').forEach(card => card.classList.remove('jump-highlight'));
+    target.classList.add('jump-highlight');
+    clearTimeout(jumpToStudent.timer);
+    jumpToStudent.timer = setTimeout(() => target.classList.remove('jump-highlight'), 1200);
+  }
+
+  function resetGradingScroll() {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const workspace = document.querySelector('.workspace');
+    if (workspace) workspace.scrollTop = 0;
+  }
+
+  function renderSlideLinks(links) {
+    els.slideLinks.innerHTML = '';
+    els.slideLinks.classList.toggle('hidden', !links.length);
+    if (!links.length) return;
+
+    links.forEach((link, index) => {
+      const anchor = document.createElement('a');
+      anchor.href = link;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener';
+      anchor.innerHTML = `<i class="ti ti-presentation" aria-hidden="true"></i> ${links.length === 1 ? 'Open Slides' : `Open Slides ${index + 1}`}`;
+      els.slideLinks.appendChild(anchor);
+    });
+  }
+
+  function renderStudents(students) {
+    els.studentList.innerHTML = '';
+    if (!students.length) {
+      els.studentList.innerHTML = '<div class="notice error">No student rows were found for this group.</div>';
+      return;
+    }
+
+    students.forEach(student => {
+      const card = document.createElement('article');
+      card.className = 'student-card';
+      card.dataset.rowNumber = student.rowNumber;
+      card.dataset.groupId = student.groupId;
+      card.innerHTML = `
+        <div class="student-head">
+          <div>
+            <span class="student-kicker"><i class="ti ti-user" aria-hidden="true"></i> Individual Evaluation</span>
+            <h4>${escapeHtml(student.name || 'Unnamed student')}</h4>
+            <span class="status-badge" data-status="${escapeHtml(student.status)}">${escapeHtml(student.status)}</span>
+          </div>
+          <div class="total-score">
+            <strong>${student.totalScore === '' ? '-' : student.totalScore}</strong>
+            <span>Total / 15</span>
+          </div>
+        </div>
+        <div class="student-controls">
+          <div class="rubric-card individual-card" data-criterion="historicalContextScore">
+            <div class="rubric-card-head">
+              <div>
+                <span class="rubric-title"><span class="rubric-icon"><i class="ti ti-timeline" aria-hidden="true"></i></span> Historical Accuracy & Context</span>
+                <small>0-3 points</small>
+              </div>
+              <span class="scoring-badge individual">Individual</span>
+            </div>
+            ${rubricScoringHtml('historicalContextScore', student.historicalContextScore)}
+            ${commentFieldHtml('historicalComment', 'Historical Comment', student.historicalComment)}
+          </div>
+          <div class="rubric-card individual-card" data-criterion="presentationSkillsScore">
+            <div class="rubric-card-head">
+              <div>
+                <span class="rubric-title"><span class="rubric-icon"><i class="ti ti-microphone-2" aria-hidden="true"></i></span> Presentation Skills</span>
+                <small>0-6 points</small>
+              </div>
+              <span class="scoring-badge individual">Individual</span>
+            </div>
+            ${rubricScoringHtml('presentationSkillsScore', student.presentationSkillsScore)}
+            ${commentFieldHtml('presentationComment', 'Presentation Comment', student.presentationComment)}
+          </div>
+        </div>
+      `;
+
+      card.querySelectorAll('[data-band-key]').forEach(button => {
+        button.addEventListener('click', () => handleStudentBandClick(card, button));
+      });
+      card.querySelectorAll('[data-student-field]').forEach(input => {
+        if (input.tagName.toLowerCase() === 'textarea') return;
+        input.addEventListener('change', () => handleStudentManualScoreChange(card, input));
+        input.addEventListener('keydown', blurOnEnter);
+      });
+      card.querySelectorAll('textarea[data-comment-field]').forEach(textarea => {
+        textarea.addEventListener('input', () => debounceStudentComment(card, textarea));
+        textarea.addEventListener('blur', () => saveStudentCommentNow(card, textarea));
+      });
+      card.querySelectorAll('.rubric-card').forEach(rubricCard => {
+        syncRubricControl(rubricCard, rubricCard.dataset.criterion);
+      });
+      els.studentList.appendChild(card);
+    });
+  }
+
+  function rubricScoringHtml(criterionKey, value) {
+    const criterion = RUBRIC_CRITERIA[criterionKey];
+    return `
+      <p class="rubric-guidance">${escapeHtml(summaryGuidance(criterionKey))}</p>
+      <div class="rubric-performance-grid" data-criterion="${escapeAttribute(criterionKey)}" aria-label="${escapeAttribute(criterion.title)} performance levels">
+        ${performanceCardsHtml(criterionKey)}
+      </div>
+      <label class="score-field manual-score-field">
+        <span>Manual score</span>
+        <input data-student-field="${escapeAttribute(criterionKey)}" data-score-input="${escapeAttribute(criterionKey)}" type="number" min="0" max="${criterion.max}" step="any" inputmode="decimal" value="${escapeAttribute(valueForSelect(value))}" aria-label="${escapeAttribute(`${criterion.title} manual score, 0-${criterion.max}`)}">
+        <small>0-${criterion.max} points. Click a band to fill a default score, click again to clear, or type a custom score.</small>
+      </label>
+      <div class="score-state" data-score-state aria-live="polite">No score selected.</div>
+    `;
+  }
+
+  function commentFieldHtml(field, label, value) {
+    return `
+      <label class="score-field comment-field ${state.commentsCollapsed ? 'collapsed' : ''}">
+        <span>${escapeHtml(label)}</span>
+        <textarea data-comment-field="${escapeAttribute(field)}" rows="2" placeholder="Add brief feedback...">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
+  function renderPerformanceCards(container, criterionKey) {
+    if (!container) return;
+    container.dataset.criterion = criterionKey;
+    container.innerHTML = performanceCardsHtml(criterionKey);
+    container.querySelectorAll('[data-band-key]').forEach(button => {
+      button.addEventListener('click', () => handleGroupBandClick(button));
+    });
+    const card = container.closest('.rubric-card');
+    if (card && !card.querySelector('[data-score-state]')) {
+      const stateLabel = document.createElement('div');
+      stateLabel.className = 'score-state';
+      stateLabel.dataset.scoreState = '';
+      stateLabel.setAttribute('aria-live', 'polite');
+      stateLabel.textContent = 'No score selected.';
+      card.appendChild(stateLabel);
+    }
+  }
+
+  function performanceCardsHtml(criterionKey) {
+    return RUBRIC_CRITERIA[criterionKey].bands.map(band => `
+      <button class="performance-card" type="button" data-band-key="${escapeAttribute(band.key)}" data-band-score="${band.score}" aria-pressed="false">
+        <span class="performance-meta">
+          <span class="performance-label">${escapeHtml(band.label)}</span>
+          <span class="performance-score" aria-label="Score ${band.score}">${band.score}</span>
+        </span>
+        <span class="performance-text">${escapeHtml(band.cardText || band.text)}</span>
+      </button>
+    `).join('');
+  }
+
+  function summaryGuidance(criterionKey) {
+    const criterion = RUBRIC_CRITERIA[criterionKey];
+    return criterion.helper;
+  }
+
+  function handleGroupBandClick(button) {
+    const card = button.closest('.rubric-card');
+    const wasSelected = button.classList.contains('selected');
+    els.slideDesignScore.value = wasSelected ? '' : button.dataset.bandScore;
+    els.slideDesignScore.setCustomValidity('');
+    syncRubricControl(card, 'slideDesignScore');
+    saveGroupScores();
+  }
+
+  function handleStudentBandClick(card, button) {
+    const rubricCard = button.closest('.rubric-card');
+    const criterionKey = rubricCard.dataset.criterion;
+    const input = rubricCard.querySelector(`[data-score-input="${criterionKey}"]`);
+    const wasSelected = button.classList.contains('selected');
+    input.value = wasSelected ? '' : button.dataset.bandScore;
+    input.setCustomValidity('');
+    syncRubricControl(rubricCard, criterionKey);
+    saveStudent(card);
+  }
+
+  function handleGroupManualScoreChange() {
+    if (!validateScoreInput(els.slideDesignScore, 'slideDesignScore')) return;
+    syncRubricControl(els.slideDesignScore.closest('.rubric-card'), 'slideDesignScore');
+    saveGroupScores();
+  }
+
+  function handleStudentManualScoreChange(card, input) {
+    const criterionKey = input.dataset.scoreInput;
+    if (!validateScoreInput(input, criterionKey)) return;
+    syncRubricControl(input.closest('.rubric-card'), criterionKey);
+    saveStudent(card);
+  }
+
+  function validateScoreInput(input, criterionKey) {
+    const criterion = RUBRIC_CRITERIA[criterionKey];
+    const value = input.value.trim();
+    input.setCustomValidity('');
+    if (value === '') return true;
+
+    const number = Number(value);
+    if (Number.isNaN(number) || number < 0 || number > criterion.max) {
+      const message = `${criterion.title} must be blank or a number from 0 to ${criterion.max}.`;
+      input.setCustomValidity(message);
+      input.reportValidity();
+      showToast(message);
+      return false;
+    }
+
+    input.value = formatScoreValue(number);
+    return true;
+  }
+
+  function syncRubricControl(card, criterionKey) {
+    if (!card || !criterionKey) return;
+    card.dataset.criterion = criterionKey;
+    const criterion = RUBRIC_CRITERIA[criterionKey];
+    const input = card.querySelector(`[data-score-input="${criterionKey}"]`);
+    const stateLabel = card.querySelector('[data-score-state]');
+    if (!input) return;
+
+    const value = input.value.trim();
+    const matchingBand = criterion.bands.find(band => value !== '' && Number(value) === band.score);
+    card.classList.toggle('custom-score', Boolean(value && !matchingBand));
+
+    card.querySelectorAll('[data-band-key]').forEach(button => {
+      const selected = Boolean(matchingBand && button.dataset.bandKey === matchingBand.key);
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+
+    if (!stateLabel) return;
+    if (!value) {
+      stateLabel.textContent = 'No score selected.';
+    } else if (matchingBand) {
+      stateLabel.textContent = `${matchingBand.label} default selected: ${matchingBand.score}/${criterion.max}.`;
+    } else {
+      stateLabel.textContent = `Custom score: ${value}/${criterion.max}.`;
+    }
+  }
+
+  function formatScoreValue(value) {
+    return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
+  }
+
+  function saveGroupScores(payloadOverride) {
+    const payload = payloadOverride || {
+      groupId: state.selectedGroupId,
+      slideDesignScore: els.slideDesignScore.value,
+      groupComment: els.groupComment.value
+    };
+    if (!payload.groupId) return;
+    if (!validateScoreInput(els.slideDesignScore, 'slideDesignScore')) return;
+    const version = markDirty();
+    google.script.run
+      .withSuccessHandler(response => handleSaveResponse(response, version))
+      .withFailureHandler(handleSaveFailure)
+      .saveGroupScores(payload);
+  }
+
+  function saveStudent(card) {
+    const scoreInputs = [...card.querySelectorAll('[data-score-input]')];
+    const allValid = scoreInputs.every(input => validateScoreInput(input, input.dataset.scoreInput));
+    if (!allValid) return;
+    const payload = studentPayload(card);
+    const version = markDirty();
+    google.script.run
+      .withSuccessHandler(response => handleSaveResponse(response, version))
+      .withFailureHandler(handleSaveFailure)
+      .saveStudentGrade(payload);
+  }
+
+  function debounceGroupComment() {
+    const payload = {
+      groupId: state.selectedGroupId,
+      slideDesignScore: els.slideDesignScore.value,
+      groupComment: els.groupComment.value
+    };
+    markDirty();
+    clearTimeout(state.groupCommentTimer);
+    state.groupCommentTimer = setTimeout(() => {
+      state.groupCommentTimer = null;
+      saveGroupScores(payload);
+    }, 800);
+  }
+
+  function saveGroupCommentNow() {
+    const payload = {
+      groupId: state.selectedGroupId,
+      slideDesignScore: els.slideDesignScore.value,
+      groupComment: els.groupComment.value
+    };
+    clearTimeout(state.groupCommentTimer);
+    state.groupCommentTimer = null;
+    saveGroupScores(payload);
+  }
+
+  function debounceStudentComment(card, textarea) {
+    const rowNumber = card.dataset.rowNumber;
+    const field = textarea.dataset.commentField;
+    markDirty();
+    const timerKey = `${rowNumber}:${field}`;
+    clearTimeout(state.commentTimers[timerKey]);
+    state.commentTimers[timerKey] = setTimeout(() => {
+      delete state.commentTimers[timerKey];
+      saveStudent(card);
+    }, 800);
+  }
+
+  function saveStudentCommentNow(card, textarea) {
+    const timerKey = `${card.dataset.rowNumber}:${textarea.dataset.commentField}`;
+    clearTimeout(state.commentTimers[timerKey]);
+    delete state.commentTimers[timerKey];
+    saveStudent(card);
+  }
+
+  function flushPendingCommentSaves() {
+    if (state.groupCommentTimer) {
+      clearTimeout(state.groupCommentTimer);
+      state.groupCommentTimer = null;
+      saveGroupScores({
+        groupId: state.selectedGroupId,
+        slideDesignScore: els.slideDesignScore.value,
+        groupComment: els.groupComment.value
+      });
+    }
+
+    Object.keys(state.commentTimers).forEach(timerKey => {
+      clearTimeout(state.commentTimers[timerKey]);
+      delete state.commentTimers[timerKey];
+      const rowNumber = timerKey.split(':')[0];
+      const card = document.querySelector(`.student-card[data-row-number="${rowNumber}"]`);
+      if (card) saveStudent(card);
+    });
+  }
+
+  function studentPayload(card) {
+    return {
+      groupId: card.dataset.groupId,
+      rowNumber: Number(card.dataset.rowNumber),
+      historicalContextScore: card.querySelector('[data-score-input="historicalContextScore"]').value,
+      presentationSkillsScore: card.querySelector('[data-score-input="presentationSkillsScore"]').value,
+      historicalComment: card.querySelector('[data-comment-field="historicalComment"]').value,
+      presentationComment: card.querySelector('[data-comment-field="presentationComment"]').value
+    };
+  }
+
+  function handleSaveResponse(response, version) {
+    if (!response.ok) return handleSaveFailure(response.message);
+    if (version !== state.changeVersion) {
+      return;
+    }
+    if (response.group && String(response.group.groupId) !== String(state.selectedGroupId)) {
+      state.dirty = false;
+      setSaveState('Saved');
+      loadAppData();
+      return;
+    }
+    state.selectedGroup = response.group;
+    state.dirty = false;
+    setSaveState('Saved');
+    if (state.mode === 'schoology') {
+      loadSchoologyData();
+      return;
+    }
+    renderGroupDetails();
+    loadAppData();
+  }
+
+  function handleSaveFailure(error) {
+    const message = error && error.message ? error.message : String(error);
+    setSaveState('Error', 'error');
+    showToast(`Save failed: ${message}`);
+    showError(message);
+  }
+
+  function moveGroup(direction) {
+    if (!state.groups.length) return;
+    const currentIndex = state.groups.findIndex(group => group.groupId === state.selectedGroupId);
+    const nextIndex = Math.min(Math.max(currentIndex + direction, 0), state.groups.length - 1);
+    selectGroup(state.groups[nextIndex].groupId);
+  }
+
+  function selectNextUngraded() {
+    if (!state.groups.length) return;
+    const startIndex = Math.max(0, state.groups.findIndex(group => group.groupId === state.selectedGroupId));
+    const ordered = state.groups.slice(startIndex + 1).concat(state.groups.slice(0, startIndex + 1));
+    const target = ordered.find(group => group.status !== 'Complete');
+    if (target) selectGroup(target.groupId);
+    else showToast('All visible groups are complete.');
+  }
+
+  function toggleComments() {
+    state.commentsCollapsed = !state.commentsCollapsed;
+    els.toggleCommentsBtn.textContent = state.commentsCollapsed ? 'Expand comments' : 'Collapse comments';
+    document.querySelectorAll('.comment-field').forEach(field => {
+      field.classList.toggle('collapsed', state.commentsCollapsed);
+    });
+  }
+
+  function valueForSelect(value) {
+    return value === null || typeof value === 'undefined' ? '' : String(value);
+  }
+
+  function blurOnEnter(event) {
+    if (event.key === 'Enter') event.target.blur();
+  }
+
+  function renderEmpty(message) {
+    els.gradingContent.classList.add('hidden');
+    els.emptyState.classList.remove('hidden');
+    els.emptyState.querySelector('h2').textContent = message;
+  }
+
+  function setSaveState(text, mode) {
+    const icon = mode === 'error' ? 'alert-circle' : mode === 'saving' ? 'device-floppy' : 'check';
+    els.saveState.innerHTML = `<i class="ti ti-${icon}" aria-hidden="true"></i> ${escapeHtml(text)}`;
+    els.saveState.classList.toggle('saving', mode === 'saving');
+    els.saveState.classList.toggle('error', mode === 'error');
+  }
+
+  function markDirty() {
+    state.dirty = true;
+    state.changeVersion += 1;
+    setSaveState('Saving...', 'saving');
+    return state.changeVersion;
+  }
+
+  function showError(message) {
+    els.errorBox.textContent = message;
+    els.errorBox.classList.remove('hidden');
+    setSaveState('Error', 'error');
+  }
+
+  function clearError() {
+    els.errorBox.classList.add('hidden');
+    els.errorBox.textContent = '';
+  }
+
+  function showToast(message) {
+    els.toast.textContent = message;
+    els.toast.classList.remove('hidden');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => els.toast.classList.add('hidden'), 3600);
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, '&#096;');
+  }
+</script>

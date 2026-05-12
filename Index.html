@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <?!= include('CSS'); ?>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Country groups">
+        <div class="brand-block">
+          <p class="eyebrow">Presentation Grader</p>
+          <h1>Country Groups</h1>
+        </div>
+
+        <div class="filter-row" role="group" aria-label="Filter by period">
+          <button class="filter-btn active" data-period="All">All</button>
+          <button class="filter-btn" data-period="5">Period 5</button>
+          <button class="filter-btn" data-period="6">Period 6</button>
+        </div>
+
+        <div class="progress-card" id="summaryProgressCard" aria-label="Grading progress">
+          <div class="progress-ring" aria-hidden="true">
+            <svg viewBox="0 0 72 72">
+              <circle class="progress-ring-track" cx="36" cy="36" r="28"></circle>
+              <circle class="progress-ring-value" id="summaryProgressRing" cx="36" cy="36" r="28"></circle>
+            </svg>
+            <span id="summaryPercent">0%</span>
+          </div>
+          <div class="progress-copy">
+            <span>Grading Progress</span>
+            <strong id="summaryGroupCount">0/0 Groups</strong>
+          </div>
+        </div>
+
+        <label class="jump-label" for="groupJump">Quick jump</label>
+        <select id="groupJump" class="group-jump"></select>
+
+        <div id="groupList" class="group-list" aria-live="polite"></div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="periodLabel">Select a group</p>
+            <h2 id="countryTitle">Presentation grading</h2>
+            <div class="header-meta">
+              <p class="subtle" id="studentLine">Load a country group to begin.</p>
+              <div class="student-nav-pills hidden" id="studentNavPills" aria-label="Jump to student"></div>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <div class="grading-actions" id="gradingActions">
+              <span class="save-pill" id="saveState"><i class="ti ti-device-floppy" aria-hidden="true"></i> Loading...</span>
+              <div class="slide-actions" id="slideLinks"></div>
+              <button class="secondary-btn" id="prevGroupBtn"><i class="ti ti-arrow-left" aria-hidden="true"></i> Previous</button>
+              <button class="secondary-btn" id="nextGroupBtn">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+              <button class="primary-btn" id="nextUngradedBtn"><i class="ti ti-player-skip-forward" aria-hidden="true"></i> Next Ungraded</button>
+            </div>
+            <div class="settings-menu-wrap">
+              <button class="icon-btn" id="settingsBtn" aria-expanded="false" aria-haspopup="true" aria-controls="settingsMenu" aria-label="Settings">
+                <i class="ti ti-settings" aria-hidden="true"></i>
+              </button>
+              <div class="settings-menu hidden" id="settingsMenu" role="menu">
+                <a href="#" id="openSpreadsheetLink" target="_blank" rel="noopener" role="menuitem">
+                  <i class="ti ti-table" aria-hidden="true"></i> Open spreadsheet
+                </a>
+                <button type="button" id="schoologyModeBtn" role="menuitem">
+                  <i class="ti ti-clipboard-text" aria-hidden="true"></i> Schoology mode
+                </button>
+                <button type="button" id="gradingModeBtn" role="menuitem" class="hidden">
+                  <i class="ti ti-pencil" aria-hidden="true"></i> Return to grading mode
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="notice error hidden" id="errorBox"></section>
+
+        <section class="content-grid hidden" id="gradingContent">
+          <section class="panel group-panel" aria-labelledby="groupScoresHeading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Shared group scoring</p>
+                <h3 id="groupScoresHeading"><i class="ti ti-users-group" aria-hidden="true"></i> Group Rubric</h3>
+                <p class="section-note">This score is entered once and applied to every student in the country group.</p>
+              </div>
+              <span class="status-badge" id="groupStatus">Ungraded</span>
+            </div>
+
+            <div class="rubric-card shared-card">
+              <div class="rubric-card-head">
+                <div>
+                  <span class="rubric-title"><span class="rubric-icon"><i class="ti ti-slideshow" aria-hidden="true"></i></span> Slide Design & Visual Storytelling</span>
+                  <small>0-6 points</small>
+                </div>
+                <span class="scoring-badge shared">Shared Group Score</span>
+              </div>
+              <p class="rubric-guidance">Look for 9-12 high-resolution, historically relevant images in a clear, logical order. The title slide should include country name and thesis, and the images should create a cohesive visual narrative that shows planning and collaboration.</p>
+              <div class="rubric-performance-grid" id="slideDesignBands" aria-label="Slide Design & Visual Storytelling performance levels"></div>
+              <label class="score-field manual-score-field" for="slideDesignScore">
+                <span>Manual score</span>
+                <input id="slideDesignScore" data-group-field="slideDesignScore" data-score-input="slideDesignScore" type="number" min="0" max="6" step="any" inputmode="decimal" aria-describedby="slideDesignScoreHelp">
+                <small id="slideDesignScoreHelp">0-6 points. Click a band to fill a default score, click again to clear, or type a custom score.</small>
+              </label>
+              <label class="score-field comment-field group-comment-field" for="groupComment">
+                <span>Group Comment</span>
+                <textarea id="groupComment" data-group-field="groupComment" rows="2" placeholder="Shared feedback for this group..."></textarea>
+              </label>
+            </div>
+
+          </section>
+
+          <section class="panel student-panel" aria-labelledby="studentScoresHeading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Per-student scoring</p>
+                <h3 id="studentScoresHeading"><i class="ti ti-user" aria-hidden="true"></i> Students</h3>
+                <p class="section-note">Historical Accuracy & Context and Presentation Skills are scored separately for each student.</p>
+              </div>
+              <button class="text-btn" id="toggleCommentsBtn">Collapse comments</button>
+            </div>
+            <div id="studentList" class="student-list"></div>
+          </section>
+        </section>
+
+        <section class="schoology-view hidden" id="schoologyContent" aria-labelledby="schoologyHeading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Read-only export</p>
+              <h3 id="schoologyHeading"><i class="ti ti-clipboard-text" aria-hidden="true"></i> Schoology Mode</h3>
+              <p class="section-note">Copy final scores and stitched comments into Schoology. Scores and comments are read from the spreadsheet.</p>
+            </div>
+          </div>
+          <div id="schoologyList" class="schoology-list"></div>
+        </section>
+
+        <section class="empty-state" id="emptyState">
+          <h2>Choose a country group.</h2>
+          <p>The latest spreadsheet data will load here, and every score change will autosave.</p>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+    <?!= include('JS'); ?>
+  </body>
+</html>
