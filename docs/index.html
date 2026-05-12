@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Olympiad Scoring App</title>
+    <meta
+      name="description"
+      content="Transitional mobile frontend for the Olympiad Scoring App, published with GitHub Pages while the Google Apps Script project remains intact.">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <style>
+      :root {
+        --navy: #10233b;
+        --blue: #155fa0;
+        --blue-deep: #0d4474;
+        --sky: #eaf4ff;
+        --surface: rgba(255, 255, 255, 0.9);
+        --surface-strong: #ffffff;
+        --line: rgba(16, 35, 59, 0.1);
+        --ink: #14263b;
+        --muted: #5d7288;
+        --success-bg: #e3f7eb;
+        --success-ink: #17573b;
+        --shadow: 0 20px 52px rgba(16, 35, 59, 0.12);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: #edf5ff;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(21, 95, 160, 0.2), transparent 30rem),
+          linear-gradient(180deg, #f9fbff 0%, #ebf4ff 100%);
+        color: var(--ink);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .page {
+        width: min(100%, 1040px);
+        margin: 0 auto;
+        padding: 18px 14px 56px;
+      }
+
+      .hero,
+      .panel,
+      .feature-card {
+        background: var(--surface);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .hero {
+        padding: 22px 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2.1rem, 8vw, 4rem);
+        line-height: 0.98;
+      }
+
+      .hero-copy {
+        margin-top: 14px;
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 1rem;
+      }
+
+      .hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: var(--surface-strong);
+        color: var(--blue);
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .panel {
+        padding: 20px 18px;
+      }
+
+      .panel h2 {
+        font-size: 1.45rem;
+      }
+
+      .panel-copy {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .feature-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .feature-card {
+        padding: 16px;
+      }
+
+      .feature-card h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1rem;
+      }
+
+      .feature-card p {
+        margin-top: 8px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .bridge-form {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .field-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .field-help {
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .url-input {
+        width: 100%;
+        min-height: 52px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+        color: #fff;
+      }
+
+      .btn-secondary {
+        background: #fff;
+        color: var(--blue);
+        border: 1px solid var(--line);
+      }
+
+      .btn[aria-disabled="true"] {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .status-note {
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: var(--radius-md);
+        background: var(--success-bg);
+        color: var(--success-ink);
+        line-height: 1.55;
+      }
+
+      .stack {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .stack-row {
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .stack-row strong {
+        display: block;
+        font-size: 0.98rem;
+      }
+
+      .stack-row span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .mono {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        word-break: break-word;
+      }
+
+      .footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      @media (min-width: 760px) {
+        .page {
+          padding: 28px 24px 72px;
+        }
+
+        .hero {
+          padding: 30px 28px;
+        }
+
+        .layout {
+          grid-template-columns: 1.1fr 0.9fr;
+          align-items: start;
+        }
+
+        .feature-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .actions {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Olympiad Scoring App</p>
+        <h1>GitHub Pages is back as the mobile frontend.</h1>
+        <p class="hero-copy">
+          This `/docs/index.html` page restores a GitHub Pages entry point without changing the existing Google Apps
+          Script and clasp project. It is intentionally static for now, but the structure is ready for a later
+          save/load connection to the GAS backend.
+        </p>
+        <div class="hero-badges" aria-label="Project highlights">
+          <span class="badge"><i class="ti ti-device-mobile" aria-hidden="true"></i> Mobile-first</span>
+          <span class="badge"><i class="ti ti-brand-google" aria-hidden="true"></i> GAS preserved</span>
+          <span class="badge"><i class="ti ti-shield-lock" aria-hidden="true"></i> No student data here</span>
+        </div>
+      </section>
+
+      <div class="layout">
+        <section class="panel">
+          <h2>Safe transition layer</h2>
+          <p class="panel-copy">
+            GitHub Pages can publish this static interface from the <span class="mono">docs/</span> folder while the
+            Apps Script app continues to own spreadsheet-backed scoring. Nothing in this page adds tracking,
+            external databases, or student records.
+          </p>
+
+          <div class="feature-grid">
+            <article class="feature-card">
+              <h3><i class="ti ti-check" aria-hidden="true"></i> Pages-friendly entry point</h3>
+              <p>A standard lowercase <span class="mono">index.html</span> now lives in <span class="mono">docs/</span> for GitHub Pages publishing.</p>
+            </article>
+            <article class="feature-card">
+              <h3><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Frontend staging area</h3>
+              <p>This page can evolve into the mobile scoring shell while backend save and load stay in Google Workspace.</p>
+            </article>
+            <article class="feature-card">
+              <h3><i class="ti ti-lock" aria-hidden="true"></i> No extra storage</h3>
+              <p>No Firebase, Supabase, analytics, or external database integrations are introduced here.</p>
+            </article>
+          </div>
+
+          <div class="stack">
+            <div class="stack-row">
+              <strong>Current role</strong>
+              <span>Static GitHub Pages frontend and future launch point for the deployed Apps Script web app.</span>
+            </div>
+            <div class="stack-row">
+              <strong>Next role</strong>
+              <span>Fetch rubric data and send score updates to a GAS web app endpoint after that integration is ready.</span>
+            </div>
+            <div class="stack-row">
+              <strong>Protected project files</strong>
+              <span><span class="mono">Code.js</span>, <span class="mono">Index.html</span>, <span class="mono">CSS.html</span>, <span class="mono">JS.html</span>, <span class="mono">appsscript.json</span>, and <span class="mono">.clasp.json</span> remain untouched.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Backend bridge placeholder</h2>
+          <p class="panel-copy">
+            When the Apps Script web app deployment URL is ready, this page can store it locally in the browser as a
+            convenience shortcut. That keeps the transition simple without wiring in live save or load behavior yet.
+          </p>
+
+          <div class="bridge-form">
+            <label class="field-label" for="gasWebAppUrl">Apps Script web app URL</label>
+            <input
+              class="url-input"
+              id="gasWebAppUrl"
+              type="url"
+              inputmode="url"
+              placeholder="https://script.google.com/macros/s/.../exec"
+              autocomplete="off">
+            <p class="field-help">
+              Saved only in this browser with <span class="mono">localStorage</span>. No data is sent from this
+              transition page until we intentionally wire up the GAS backend.
+            </p>
+
+            <div class="actions">
+              <button class="btn btn-primary" id="saveUrlBtn" type="button">
+                <i class="ti ti-device-floppy" aria-hidden="true"></i> Save URL
+              </button>
+              <a
+                class="btn btn-secondary"
+                id="openGasBtn"
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled="true">
+                <i class="ti ti-external-link" aria-hidden="true"></i> Open GAS App
+              </a>
+            </div>
+          </div>
+
+          <div class="status-note" id="statusNote">
+            No GAS web app URL is saved yet. Add one later when you are ready to connect this mobile frontend to the Apps Script backend.
+          </div>
+        </section>
+      </div>
+
+      <p class="footer">
+        Transitional GitHub Pages frontend for a Google Apps Script and Google Sheets scoring workflow.
+      </p>
+    </main>
+
+    <script>
+      (function () {
+        var storageKey = 'olympiadGasWebAppUrl';
+        var urlInput = document.getElementById('gasWebAppUrl');
+        var saveUrlBtn = document.getElementById('saveUrlBtn');
+        var openGasBtn = document.getElementById('openGasBtn');
+        var statusNote = document.getElementById('statusNote');
+
+        function normalizeUrl(value) {
+          return String(value || '').trim();
+        }
+
+        function updateUi(url) {
+          var hasUrl = Boolean(url);
+          openGasBtn.href = hasUrl ? url : '#';
+          openGasBtn.setAttribute('aria-disabled', hasUrl ? 'false' : 'true');
+          statusNote.textContent = hasUrl
+            ? 'Saved browser shortcut: ' + url
+            : 'No GAS web app URL is saved yet. Add one later when you are ready to connect this mobile frontend to the Apps Script backend.';
+        }
+
+        function loadSavedUrl() {
+          var savedUrl = normalizeUrl(window.localStorage.getItem(storageKey));
+          urlInput.value = savedUrl;
+          updateUi(savedUrl);
+        }
+
+        saveUrlBtn.addEventListener('click', function () {
+          var nextUrl = normalizeUrl(urlInput.value);
+
+          if (!nextUrl) {
+            window.localStorage.removeItem(storageKey);
+            updateUi('');
+            return;
+          }
+
+          window.localStorage.setItem(storageKey, nextUrl);
+          updateUi(nextUrl);
+        });
+
+        urlInput.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            saveUrlBtn.click();
+          }
+        });
+
+        loadSavedUrl();
+      }());
+    </script>
+  </body>
+</html>
