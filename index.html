@@ -1863,7 +1863,10 @@
       }
     }
 
-    function populateEventSelects() {
+    function populateEventSelects(options = {}) {
+      const {
+        preserveForm = false,
+      } = options;
       const previousScoreEvent = eventSelect.value;
       const previousAdjustmentEvent = adjustmentEvent.value;
       const period5Events = loadedEventConfig.period5 || [];
@@ -1910,6 +1913,15 @@
       eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
       roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
       roundSelect.required = activePeriod === 'Period 5';
+
+      // Live polling should refresh dropdown contents and saved-state UI, but it must never
+      // clobber unsaved score-entry selections, note text, or the user's current round/event.
+      if (preserveForm) {
+        renderSavedStatePanel();
+        updateStickySaveBar();
+        return;
+      }
+
       syncScoreFormWithSelection();
     }
 
@@ -2042,7 +2054,7 @@
 
     function applyLoadedEventConfig(events) {
       loadedEventConfig = cloneEvents(events);
-      populateEventSelects();
+      populateEventSelects({ preserveForm: formDirty });
     }
 
     function setEventEditorState(events) {
