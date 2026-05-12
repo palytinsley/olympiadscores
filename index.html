@@ -19,7 +19,9 @@
   <style>
     :root {
       --page-gutter: 12px;
+      --header-offset: 0px;
       --nav-offset: calc(78px + env(safe-area-inset-bottom));
+      --savebar-offset: 0px;
       --bg: #eef2eb;
       --surface: #ffffff;
       --surface-soft: #f5f7f2;
@@ -76,7 +78,7 @@
       min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
-      padding: env(safe-area-inset-top) 0 0;
+      padding: 0;
     }
 
     button,
@@ -109,13 +111,17 @@
     }
 
     .app-header {
-      position: sticky;
+      position: fixed;
+      left: 0;
+      right: 0;
       top: 0;
-      z-index: 20;
-      padding: 10px max(var(--page-gutter), env(safe-area-inset-right)) 8px max(var(--page-gutter), env(safe-area-inset-left));
+      z-index: 80;
+      padding: calc(env(safe-area-inset-top) + 8px) max(var(--page-gutter), env(safe-area-inset-right)) 8px max(var(--page-gutter), env(safe-area-inset-left));
       background: rgba(247, 249, 245, 0.94);
       backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(23, 33, 43, 0.08);
+      transform: translateZ(0);
     }
 
     .title-row {
@@ -226,7 +232,7 @@
       flex: 1 0 auto;
       width: min(720px, 100%);
       margin: 0 auto;
-      padding: 12px max(var(--page-gutter), env(safe-area-inset-right)) calc(16px + var(--nav-offset)) max(var(--page-gutter), env(safe-area-inset-left));
+      padding: calc(var(--header-offset) + 12px) max(var(--page-gutter), env(safe-area-inset-right)) calc(20px + var(--nav-offset) + var(--savebar-offset)) max(var(--page-gutter), env(safe-area-inset-left));
     }
 
     .view {
@@ -512,6 +518,107 @@
       cursor: wait;
     }
 
+    .saved-state-panel {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8faf6 100%);
+    }
+
+    .saved-state-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .saved-state-title {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .saved-state-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .saved-state-pill.is-saved {
+      border-color: rgba(77, 107, 42, 0.24);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .round-status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .round-status-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1.5px solid rgba(23, 33, 43, 0.12);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+    }
+
+    .round-status-btn.current {
+      border-color: rgba(200, 61, 49, 0.48);
+      box-shadow: 0 10px 20px rgba(200, 61, 49, 0.12);
+    }
+
+    .round-status-btn.saved {
+      background: linear-gradient(180deg, #f8fbf3 0%, #eef6e1 100%);
+      border-color: rgba(77, 107, 42, 0.3);
+    }
+
+    .round-status-text {
+      min-width: 0;
+      text-align: left;
+    }
+
+    .round-status-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .round-status-btn.saved .round-status-meta {
+      color: var(--green);
+    }
+
     .status {
       display: none;
       margin-top: 10px;
@@ -638,8 +745,17 @@
     }
 
     .breakdown-row {
-      padding: 12px;
+      padding: 0;
       border-left: 6px solid var(--red);
+    }
+
+    .breakdown-toggle {
+      width: 100%;
+      padding: 12px;
+      border: 0;
+      border-radius: inherit;
+      background: transparent;
+      text-align: left;
     }
 
     .breakdown-name {
@@ -652,6 +768,125 @@
       font-weight: 900;
       letter-spacing: -0.02em;
       text-transform: uppercase;
+    }
+
+    .breakdown-name-main {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .breakdown-chevron {
+      flex: 0 0 auto;
+      font-size: 1rem;
+      color: var(--muted);
+      transition: transform 180ms ease;
+    }
+
+    .breakdown-row.expanded .breakdown-chevron {
+      transform: rotate(180deg);
+    }
+
+    .breakdown-body {
+      display: none;
+      padding: 0 12px 12px;
+    }
+
+    .breakdown-row.expanded .breakdown-body {
+      display: grid;
+      gap: 8px;
+    }
+
+    .entry-detail-card {
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 18px;
+      background: var(--surface-soft);
+      padding: 10px;
+    }
+
+    .entry-detail-card.adjustment {
+      background: #fff8eb;
+      border-color: rgba(245, 197, 24, 0.24);
+    }
+
+    .entry-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .entry-detail-title {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .entry-detail-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .entry-detail-card.adjustment .entry-detail-badge {
+      background: #fff2cc;
+      color: #8a6800;
+    }
+
+    .entry-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .entry-detail-cell {
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 8px;
+      text-align: center;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .entry-detail-cell strong {
+      display: block;
+      margin-top: 4px;
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1.04rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .entry-detail-cell.winner {
+      outline: 2px solid rgba(77, 107, 42, 0.26);
+      background: linear-gradient(180deg, #f8fbf3 0%, #eef6e1 100%);
+    }
+
+    .entry-detail-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 700;
+      line-height: 1.35;
     }
 
     .period-tag {
@@ -768,6 +1003,79 @@
       box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.08);
     }
 
+    .sticky-save-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--nav-offset);
+      z-index: 50;
+      padding: 10px max(var(--page-gutter), env(safe-area-inset-right)) 0 max(var(--page-gutter), env(safe-area-inset-left));
+      pointer-events: none;
+    }
+
+    .sticky-save-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12);
+      pointer-events: auto;
+    }
+
+    .sticky-save-copy {
+      min-width: 0;
+    }
+
+    .sticky-save-label {
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sticky-save-title {
+      margin-top: 4px;
+      font-size: 0.92rem;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sticky-save-status {
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .sticky-save-status.good {
+      color: var(--green);
+    }
+
+    .sticky-save-status.bad {
+      color: var(--red);
+    }
+
+    .sticky-save-button {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 140px;
+      margin-top: 0;
+    }
+
     .nav-btn {
       min-height: 56px;
       border-radius: 16px;
@@ -841,12 +1149,12 @@
       main {
         width: calc(100vw - 24px);
         max-width: calc(100vw - 24px);
-        padding-top: 8px;
-        padding-bottom: calc(8px + var(--nav-offset));
+        padding-top: calc(var(--header-offset) + 8px);
+        padding-bottom: calc(12px + var(--nav-offset) + var(--savebar-offset));
       }
 
       .app-header {
-        padding-top: 8px;
+        padding-top: calc(env(safe-area-inset-top) + 8px);
         padding-bottom: 6px;
       }
 
@@ -932,12 +1240,30 @@
         margin-top: 8px;
       }
 
+      .saved-state-panel {
+        margin-top: 10px;
+        padding: 10px;
+      }
+
+      .round-status-grid,
+      .entry-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
       textarea {
         min-height: 72px;
       }
 
       .breakdown-row {
+        padding: 0;
+      }
+
+      .breakdown-toggle {
         padding: 10px;
+      }
+
+      .breakdown-body {
+        padding: 0 10px 10px;
       }
 
       .leaderboard-card {
@@ -950,6 +1276,15 @@
         padding-bottom: calc(6px + env(safe-area-inset-bottom));
       }
 
+      .sticky-save-inner {
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .sticky-save-button {
+        min-width: 124px;
+      }
+
       .nav-btn {
         min-height: 50px;
         border-radius: 14px;
@@ -959,7 +1294,6 @@
     @media (min-width: 640px) {
       body {
         --nav-offset: calc(96px + env(safe-area-inset-bottom));
-        padding-bottom: var(--nav-offset);
       }
 
       .app-header {
@@ -1019,6 +1353,8 @@
                   </select>
                 </div>
               </div>
+
+              <div class="saved-state-panel" id="savedStatePanel"></div>
 
               <div class="place-grid">
                 <div class="cohort-box cohort10">
@@ -1105,10 +1441,6 @@
               <textarea id="noteInput" placeholder="Optional for scores, required for adjustments"></textarea>
             </div>
 
-            <button class="submit-btn" id="submitBtn" type="submit">
-              <i class="ti ti-send"></i>
-              <span>Submit Entry</span>
-            </button>
             <div class="status" id="statusBox" role="status"></div>
           </form>
         </div>
@@ -1188,6 +1520,20 @@
     </section>
   </main>
 
+  <div class="sticky-save-bar" id="stickySaveBar">
+    <div class="sticky-save-inner">
+      <div class="sticky-save-copy">
+        <div class="sticky-save-label">Ready to Save</div>
+        <div class="sticky-save-title" id="stickySaveTitle">Select an event</div>
+        <div class="sticky-save-status" id="stickySaveStatus">Choose placements, then save manually.</div>
+      </div>
+      <button class="submit-btn sticky-save-button" id="submitBtn" type="submit" form="scoreForm">
+        <i class="ti ti-device-floppy"></i>
+        <span>Save Score</span>
+      </button>
+    </div>
+  </div>
+
   <nav class="bottom-nav" aria-label="Primary navigation">
     <button class="nav-btn active" type="button" data-view="entryView"><i class="ti ti-edit"></i>Entry</button>
     <button class="nav-btn" type="button" data-view="breakdownView"><i class="ti ti-chart-bar"></i>Breakdown</button>
@@ -1196,7 +1542,7 @@
   </nav>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwTqaiUwXK63Z8zyWWGnFHyMT6QIEUarlALj52hYfiiDtid9gi9j2WSrVtKwGKOf5Q7/exec';
+    const API_URL = 'PASTE_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE';
     const cohorts = [
       { key: 'cohort10', label: 'Cohort 10', shortLabel: '10', className: 'cohort10', icon: 'ti-shield' },
       { key: 'cohort11', label: 'Cohort 11', shortLabel: '11', className: 'cohort11', icon: 'ti-sun' },
@@ -1211,6 +1557,10 @@
     let eventEditorState = { period5: [], period6: [] };
     let eventEditorDirty = false;
     let savingEventConfig = false;
+    let formDirty = false;
+    let stickySaveState = 'idle';
+    let stickySaveMessage = 'Choose placements, then save manually.';
+    const expandedBreakdownEvents = new Set();
 
     const totalsGrid = document.getElementById('totalsGrid');
     const syncText = document.getElementById('syncText');
@@ -1239,16 +1589,18 @@
     const saveEventsBtn = document.getElementById('saveEventsBtn');
     const eventStatusBox = document.getElementById('eventStatusBox');
     const roundSelect = document.getElementById('roundSelect');
+    const savedStatePanel = document.getElementById('savedStatePanel');
+    const stickySaveBar = document.getElementById('stickySaveBar');
+    const stickySaveTitle = document.getElementById('stickySaveTitle');
+    const stickySaveStatus = document.getElementById('stickySaveStatus');
+    const appHeader = document.querySelector('.app-header');
 
     function isApiUrlConfigured() {
       return API_URL && !API_URL.includes('PASTE_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE');
     }
 
     function getErrorMessage(error, fallbackMessage) {
-      if (error && error.message) {
-        return error.message;
-      }
-      return fallbackMessage;
+      return error && error.message ? error.message : fallbackMessage;
     }
 
     function setSyncMessage(message) {
@@ -1299,9 +1651,17 @@
         return;
       }
 
-      const width = window.innerWidth;
-      const clientWidth = document.documentElement.clientWidth;
-      viewportDebug.textContent = `hidden debug ${width} / ${clientWidth}`;
+      viewportDebug.textContent = `hidden debug ${window.innerWidth} / ${document.documentElement.clientWidth}`;
+    }
+
+    function updateLayoutMetrics() {
+      const headerHeight = appHeader ? Math.ceil(appHeader.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--header-offset', `${headerHeight}px`);
+
+      const saveBarVisible = !stickySaveBar.classList.contains('hidden');
+      const saveBarHeight = saveBarVisible ? Math.ceil(stickySaveBar.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--savebar-offset', `${saveBarHeight}px`);
+      updateViewportDebug();
     }
 
     function renderTotals(totals) {
@@ -1314,29 +1674,84 @@
           </div>
         `;
       }).join('');
+      updateLayoutMetrics();
     }
 
     function renderBreakdown(rows) {
-      breakdownList.innerHTML = rows.map(row => `
-        <article class="form-panel breakdown-row">
-          <div class="breakdown-name">
-            <span>${escapeHtml(row.eventName)}</span>
-            <span class="period-tag">${escapeHtml(row.period)}</span>
+      if (!rows || !rows.length) {
+        breakdownList.innerHTML = '<div class="empty-state">No scores yet. Saved rounds and winners will appear here.</div>';
+        return;
+      }
+
+      breakdownList.innerHTML = rows.map(row => {
+        const eventKey = `${row.period}::${row.eventName}`;
+        const expanded = expandedBreakdownEvents.has(eventKey);
+        const entries = Array.isArray(row.entries) ? row.entries : [];
+        return `
+          <article class="form-panel breakdown-row ${expanded ? 'expanded' : ''}" data-event-key="${escapeAttribute(eventKey)}">
+            <button class="breakdown-toggle" type="button" data-breakdown-toggle="${escapeAttribute(eventKey)}" aria-expanded="${expanded ? 'true' : 'false'}">
+              <div class="breakdown-name">
+                <span class="breakdown-name-main">
+                  <i class="ti ti-chevron-down breakdown-chevron"></i>
+                  <span>${escapeHtml(row.eventName)}</span>
+                </span>
+                <span class="period-tag">${escapeHtml(row.period)}</span>
+              </div>
+              <div class="mini-scores">
+                <div class="mini-score">C10<strong>${row.cohort10}</strong></div>
+                <div class="mini-score">C11<strong>${row.cohort11}</strong></div>
+                <div class="mini-score">C12<strong>${row.cohort12}</strong></div>
+              </div>
+            </button>
+            <div class="breakdown-body">
+              ${entries.length ? entries.map(renderBreakdownEntry).join('') : '<div class="empty-state">No round-level entries yet.</div>'}
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderBreakdownEntry(entry) {
+      const isAdjustment = entry.type !== 'score';
+      const badge = isAdjustment
+        ? `${escapeHtml(entry.type)}`
+        : `${escapeHtml(getWinnerLabel(entry))}`;
+      const title = isAdjustment
+        ? `${capitalize(entry.type)} Entry`
+        : `${escapeHtml(entry.round || 'Event Result')}`;
+
+      return `
+        <div class="entry-detail-card ${isAdjustment ? 'adjustment' : ''}">
+          <div class="entry-detail-head">
+            <div class="entry-detail-title">${title}</div>
+            <div class="entry-detail-badge">${badge}</div>
           </div>
-          <div class="mini-scores">
-            <div class="mini-score">C10<strong>${row.cohort10}</strong></div>
-            <div class="mini-score">C11<strong>${row.cohort11}</strong></div>
-            <div class="mini-score">C12<strong>${row.cohort12}</strong></div>
+          <div class="entry-detail-grid">
+            ${cohorts.map(cohort => {
+              const placeText = isAdjustment
+                ? formatAdjustmentPoints(entry.points?.[cohort.key] || 0)
+                : `${escapeHtml(entry.places?.[cohort.key] || '-')}`;
+              const pointsText = `${entry.points?.[cohort.key] || 0} pts`;
+              const winnerClass = entry.places?.[cohort.key] === '1st' ? 'winner' : '';
+              return `
+                <div class="entry-detail-cell ${winnerClass}">
+                  C${cohort.shortLabel}
+                  <strong>${placeText}</strong>
+                  <span>${escapeHtml(pointsText)}</span>
+                </div>
+              `;
+            }).join('')}
           </div>
-        </article>
-      `).join('');
+          ${entry.note ? `<div class="entry-detail-note">${escapeHtml(entry.note)}</div>` : ''}
+        </div>
+      `;
     }
 
     function renderLeaderboard(totals) {
       const ranked = [...(totals.cohorts || [])].sort((a, b) => b.total - a.total);
       leaderboardList.innerHTML = ranked.map((cohort, index) => {
-        const config = cohorts.find(item => item.key === cohort.key);
-        const rankLabel = ['1st Place', '2nd Place', '3rd Place'][index];
+        const config = cohorts.find(item => item.key === cohort.key) || cohorts[index];
+        const rankLabel = ['1st Place', '2nd Place', '3rd Place'][index] || '';
         return `
           <article class="leaderboard-card ${config.className}">
             <div class="rank-icon"><i class="ti ${rankIcons[index]}"></i></div>
@@ -1351,14 +1766,19 @@
     }
 
     function hydrate(data) {
-      latestData = data;
-      renderTotals(data.totals);
-      renderBreakdown(data.breakdown);
-      renderLeaderboard(data.totals);
-      applyLoadedEventConfig(data.events);
+      latestData = {
+        ...data,
+        entryState: data.entryState || { period5: {}, period6: {} },
+      };
+      renderTotals(latestData.totals);
+      renderBreakdown(latestData.breakdown);
+      renderLeaderboard(latestData.totals);
+      applyLoadedEventConfig(latestData.events);
       if (!eventEditorDirty && !savingEventConfig) {
-        setEventEditorState(data.events);
+        setEventEditorState(latestData.events);
       }
+      renderSavedStatePanel();
+      updateStickySaveBar();
       setSyncMessage('Live');
     }
 
@@ -1372,9 +1792,11 @@
     }
 
     function populateEventSelects() {
+      const previousScoreEvent = eventSelect.value;
+      const previousAdjustmentEvent = adjustmentEvent.value;
       const period5Events = loadedEventConfig.period5 || [];
       const period6Events = loadedEventConfig.period6 || [];
-      const events = activePeriod === 'Period 5' ? period5Events : period6Events;
+      const activeEvents = activePeriod === 'Period 5' ? period5Events : period6Events;
       const allEvents = [...period5Events, ...period6Events];
 
       if (!allEvents.length) {
@@ -1382,6 +1804,7 @@
         adjustmentEvent.innerHTML = '<option value="">Event list unavailable</option>';
         submitBtn.disabled = true;
         showStatus('Event list could not be loaded. Please try again or check Settings.', false);
+        updateStickySaveBar();
         return;
       }
 
@@ -1391,14 +1814,32 @@
         statusBox.textContent = '';
       }
 
-      eventSelect.innerHTML = events.map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`).join('');
-      eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
-      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
-      roundSelect.required = activePeriod === 'Period 5';
-
+      eventSelect.innerHTML = activeEvents
+        .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
+        .join('');
       adjustmentEvent.innerHTML = allEvents
         .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
         .join('');
+
+      if (activeEvents.includes(previousScoreEvent)) {
+        eventSelect.value = previousScoreEvent;
+      }
+      if (!eventSelect.value && activeEvents.length) {
+        eventSelect.value = activeEvents[0];
+      }
+
+      if (allEvents.includes(previousAdjustmentEvent)) {
+        adjustmentEvent.value = previousAdjustmentEvent;
+      }
+      if (!adjustmentEvent.value && allEvents.length) {
+        adjustmentEvent.value = allEvents[0];
+      }
+
+      eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
+      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
+      roundSelect.required = activePeriod === 'Period 5';
+      renderSavedStatePanel();
+      updateStickySaveBar();
     }
 
     function setEntryType(type) {
@@ -1410,6 +1851,9 @@
       adjustmentFields.classList.toggle('hidden', type === 'score');
       noteInput.required = type !== 'score';
       adjustmentPoints.required = type !== 'score';
+      renderSavedStatePanel();
+      updateStickySaveBar();
+      updateLayoutMetrics();
     }
 
     function updatePlaceOptions() {
@@ -1435,6 +1879,15 @@
     function showStatus(message, good) {
       statusBox.textContent = message;
       statusBox.className = `status ${good ? 'good' : 'bad'}`;
+      stickySaveState = good ? 'good' : 'bad';
+      stickySaveMessage = message;
+      updateStickySaveBar();
+    }
+
+    function setStickySaveStatus(message, state = 'idle') {
+      stickySaveState = state;
+      stickySaveMessage = message;
+      updateStickySaveBar();
     }
 
     function clearFormAfterSubmit() {
@@ -1460,7 +1913,7 @@
           type: 'score',
           period: activePeriod,
           eventName: eventSelect.value,
-          round: activePeriod === 'Period 5' ? document.getElementById('roundSelect').value : '',
+          round: activePeriod === 'Period 5' ? roundSelect.value : '',
           places: {
             cohort10: document.getElementById('place10').value,
             cohort11: document.getElementById('place11').value,
@@ -1484,20 +1937,24 @@
       event.preventDefault();
       submitBtn.disabled = true;
       statusBox.className = 'status';
+      setStickySaveStatus('Saving to Google Sheet…', 'idle');
 
       try {
         const result = await serverRun('logScore', buildPayload());
         hydrate({
           totals: result.totals,
           breakdown: result.breakdown,
+          entryState: result.entryState,
           events: result.events || loadedEventConfig,
         });
         clearFormAfterSubmit();
+        formDirty = false;
         showStatus('Saved. Running totals updated.', true);
       } catch (error) {
         showStatus(getErrorMessage(error, 'Could not save this entry.'), false);
       } finally {
         submitBtn.disabled = false;
+        updateStickySaveBar();
       }
     }
 
@@ -1736,6 +2193,151 @@
       }, 4500);
     }
 
+    function getCurrentEntryState() {
+      const fallback = { period5: {}, period6: {} };
+      return latestData && latestData.entryState ? latestData.entryState : fallback;
+    }
+
+    function getScoreSelectionLabel() {
+      const eventName = eventSelect.value || 'Select an event';
+      const roundText = activePeriod === 'Period 5' ? ` • ${roundSelect.value}` : '';
+      return `${eventName}${roundText}`;
+    }
+
+    function getCurrentSavedSummary() {
+      const entryState = getCurrentEntryState();
+      if (activeType !== 'score') {
+        return {
+          title: 'Adjustments save manually',
+          status: 'Penalty and bonus entries are not autosaved.',
+        };
+      }
+
+      if (activePeriod === 'Period 5') {
+        const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
+        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round]).length;
+        const currentRoundSaved = Boolean(eventState.savedRounds && eventState.savedRounds[roundSelect.value]);
+        return {
+          title: getScoreSelectionLabel(),
+          status: currentRoundSaved
+            ? `${roundSelect.value} is already saved for this station.`
+            : savedCount
+              ? `${savedCount} of 4 rounds saved for this station.`
+              : 'No rounds saved yet for this station.',
+        };
+      }
+
+      const eventState = entryState.period6[eventSelect.value] || { saved: false };
+      return {
+        title: getScoreSelectionLabel(),
+        status: eventState.saved
+          ? 'This Period 6 event already has a saved result.'
+          : 'No saved result yet for this Period 6 event.',
+      };
+    }
+
+    function renderSavedStatePanel() {
+      if (activeType !== 'score') {
+        savedStatePanel.innerHTML = `
+          <div class="saved-state-header">
+            <div class="saved-state-title">Saved Score Status</div>
+            <div class="saved-state-pill"><i class="ti ti-adjustments"></i><span>Adjustments use notes + manual save</span></div>
+          </div>
+        `;
+        return;
+      }
+
+      const entryState = getCurrentEntryState();
+      if (activePeriod === 'Period 5') {
+        const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
+        const savedCount = roundOptions.filter(round => eventState.savedRounds && eventState.savedRounds[round]).length;
+        savedStatePanel.innerHTML = `
+          <div class="saved-state-header">
+            <div class="saved-state-title">Saved Rounds</div>
+            <div class="saved-state-pill ${savedCount ? 'is-saved' : ''}">
+              <i class="ti ${savedCount ? 'ti-circle-check' : 'ti-clock-hour-4'}"></i>
+              <span>${savedCount}/4 saved for ${escapeHtml(eventSelect.value || 'this station')}</span>
+            </div>
+          </div>
+          <div class="round-status-grid">
+            ${roundOptions.map(round => {
+              const saved = Boolean(eventState.savedRounds && eventState.savedRounds[round]);
+              const current = roundSelect.value === round;
+              return `
+                <button class="round-status-btn ${saved ? 'saved' : ''} ${current ? 'current' : ''}" type="button" data-round-jump="${escapeAttribute(round)}">
+                  <span class="round-status-text">${escapeHtml(round)}</span>
+                  <span class="round-status-meta">
+                    <i class="ti ${saved ? 'ti-circle-check' : current ? 'ti-arrow-right' : 'ti-circle-dashed'}"></i>
+                    ${saved ? 'Saved' : current ? 'Current' : 'Open'}
+                  </span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+        return;
+      }
+
+      const eventState = entryState.period6[eventSelect.value] || { saved: false };
+      savedStatePanel.innerHTML = `
+        <div class="saved-state-header">
+          <div class="saved-state-title">Saved Event Status</div>
+          <div class="saved-state-pill ${eventState.saved ? 'is-saved' : ''}">
+            <i class="ti ${eventState.saved ? 'ti-circle-check' : 'ti-circle-dashed'}"></i>
+            <span>${eventState.saved ? 'Saved result on file' : 'Not saved yet'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateStickySaveBar() {
+      const onEntryView = document.getElementById('entryView').classList.contains('active');
+      stickySaveBar.classList.toggle('hidden', !onEntryView);
+
+      const summary = getCurrentSavedSummary();
+      stickySaveTitle.textContent = summary.title;
+
+      let message = stickySaveMessage;
+      if (stickySaveState === 'idle') {
+        if (formDirty) {
+          message = activeType === 'score'
+            ? `Unsaved changes. ${summary.status}`
+            : 'Unsaved adjustment. Save when ready.';
+        } else {
+          message = summary.status;
+        }
+      }
+
+      stickySaveStatus.textContent = message;
+      stickySaveStatus.className = `sticky-save-status${stickySaveState === 'good' ? ' good' : stickySaveState === 'bad' ? ' bad' : ''}`;
+      submitBtn.querySelector('span').textContent = activeType === 'score' ? 'Save Score' : 'Save Entry';
+      updateLayoutMetrics();
+    }
+
+    function markFormDirtyAndRefresh() {
+      formDirty = true;
+      stickySaveState = 'idle';
+      stickySaveMessage = 'Choose placements, then save manually.';
+      updateStickySaveBar();
+    }
+
+    function getWinnerLabel(entry) {
+      const winners = Array.isArray(entry.winners) ? entry.winners : [];
+      return winners.length ? `${winners.join(', ')} won` : 'Scored';
+    }
+
+    function formatAdjustmentPoints(points) {
+      if (!points) {
+        return '0';
+      }
+      return points > 0 ? `+${points}` : `${points}`;
+    }
+
+    function capitalize(value) {
+      const text = String(value || '');
+      return text ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : '';
+    }
+
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, character => ({
         '&': '&amp;',
@@ -1765,7 +2367,10 @@
     });
 
     document.querySelectorAll('.place-select').forEach(select => {
-      select.addEventListener('change', updatePlaceOptions);
+      select.addEventListener('change', () => {
+        updatePlaceOptions();
+        markFormDirtyAndRefresh();
+      });
     });
 
     document.querySelectorAll('.place-btn').forEach(button => {
@@ -1776,8 +2381,18 @@
       button.addEventListener('click', () => {
         document.querySelectorAll('.nav-btn').forEach(item => item.classList.toggle('active', item === button));
         document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === button.dataset.view));
+        updateStickySaveBar();
       });
     });
+
+    eventSelect.addEventListener('change', updateStickySaveBar);
+    eventSelect.addEventListener('change', renderSavedStatePanel);
+    roundSelect.addEventListener('change', renderSavedStatePanel);
+    roundSelect.addEventListener('change', updateStickySaveBar);
+    noteInput.addEventListener('input', markFormDirtyAndRefresh);
+    adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
+    adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
+    document.getElementById('adjustmentCohort').addEventListener('change', markFormDirtyAndRefresh);
 
     adjustmentPreset.addEventListener('change', () => {
       if (adjustmentPreset.value) {
@@ -1786,6 +2401,33 @@
           setEntryType('penalty');
         }
       }
+      markFormDirtyAndRefresh();
+    });
+
+    savedStatePanel.addEventListener('click', event => {
+      const roundButton = event.target.closest('[data-round-jump]');
+      if (!roundButton) {
+        return;
+      }
+
+      roundSelect.value = roundButton.dataset.roundJump;
+      renderSavedStatePanel();
+      updateStickySaveBar();
+    });
+
+    breakdownList.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-breakdown-toggle]');
+      if (!toggle) {
+        return;
+      }
+
+      const key = toggle.dataset.breakdownToggle;
+      if (expandedBreakdownEvents.has(key)) {
+        expandedBreakdownEvents.delete(key);
+      } else {
+        expandedBreakdownEvents.add(key);
+      }
+      renderBreakdown((latestData && latestData.breakdown) || []);
     });
 
     [period5EventList, period6EventList].forEach(container => {
@@ -1826,8 +2468,9 @@
     addPeriod5EventBtn.addEventListener('click', () => addEventRow('period5'));
     addPeriod6EventBtn.addEventListener('click', () => addEventRow('period6'));
     saveEventsBtn.addEventListener('click', handleSaveEvents);
-    window.addEventListener('resize', updateViewportDebug);
-    window.addEventListener('orientationchange', updateViewportDebug);
+    window.addEventListener('resize', updateLayoutMetrics);
+    window.addEventListener('orientationchange', updateLayoutMetrics);
+    window.addEventListener('load', updateLayoutMetrics);
 
     roundSelect.innerHTML = roundOptions
       .map(option => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
@@ -1837,7 +2480,7 @@
     populateEventSelects();
     setEntryType('score');
     updatePlaceOptions();
-    updateViewportDebug();
+    updateLayoutMetrics();
     refreshData();
     setInterval(refreshData, 5000);
   </script>
