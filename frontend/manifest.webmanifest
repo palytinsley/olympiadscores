@@ -1,8 +1,7 @@
 {
   "name": "Olympiad Scorer",
   "short_name": "Olympiad",
-  "description": "SJP Olympiad live scoring",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
