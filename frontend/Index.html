@@ -1454,6 +1454,7 @@
                 <div>
                   <label for="eventSelect" id="eventLabel">Station</label>
                   <select id="eventSelect" required></select>
+                  <div class="saved-state-pill" id="scoringTierPill" style="margin-top: 8px;">10 / 7 / 5</div>
                 </div>
                 <div id="roundWrap">
                   <label for="roundSelect">Round</label>
@@ -1537,8 +1538,13 @@
                   <label for="adjustmentPreset">Preset</label>
                   <select id="adjustmentPreset">
                     <option value="">Custom points</option>
-                    <option value="1" data-type="penalty">Late penalty: -1 per student</option>
-                    <option value="5" data-type="penalty">Phone penalty: -5</option>
+                    <optgroup label="Rapid Fire">
+                      <option value="5" data-type="bonus">Rapid Fire Win (+5 pts)</option>
+                    </optgroup>
+                    <optgroup label="Sportsmanship">
+                      <option value="1" data-type="penalty">Late penalty: −1 per student</option>
+                      <option value="5" data-type="penalty">Phone penalty: −5</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div>
@@ -1586,8 +1592,8 @@
             <div class="settings-stack">
               <section class="settings-card">
                 <div class="settings-card-header">
-                  <h3 class="settings-card-title">Period 5 Rotational Field Games</h3>
-                  <p class="settings-card-copy">These appear with the Round selector during score entry.</p>
+                  <h3 class="settings-card-title">Period 5 — Stations & Mini Events</h3>
+                  <p class="settings-card-copy">Stations use the Round selector. Multi-Mini and Rapid Fire are scored here too.</p>
                 </div>
                 <div class="event-manager-list" id="period5EventList"></div>
                 <button class="add-event-btn" id="addPeriod5EventBtn" type="button">
@@ -1598,7 +1604,7 @@
 
               <section class="settings-card">
                 <div class="settings-card-header">
-                  <h3 class="settings-card-title">Period 6 Cohort Competitions</h3>
+                  <h3 class="settings-card-title">Period 6 — Cohort Competitions</h3>
                   <p class="settings-card-copy">These appear without the Round selector.</p>
                 </div>
                 <div class="event-manager-list" id="period6EventList"></div>
@@ -1672,6 +1678,11 @@
     ];
     const roundOptions = ['Round 1', 'Round 2', 'Round 3', 'Round 4'];
     const rankIcons = ['ti-trophy', 'ti-medal-2', 'ti-medal'];
+    const scoringTierOptions = {
+      standard: { label: 'Standard (10 / 7 / 5)', pointsLabel: '10 / 7 / 5' },
+      championship: { label: 'Championship (40 / 30 / 20)', pointsLabel: '40 / 30 / 20' },
+    };
+    const defaultScoringTier = 'standard';
     let activePeriod = 'Period 5';
     let activeType = 'score';
     let latestData = null;
@@ -1705,6 +1716,7 @@
     const statusBox = document.getElementById('statusBox');
     const eventSelect = document.getElementById('eventSelect');
     const eventLabel = document.getElementById('eventLabel');
+    const scoringTierPill = document.getElementById('scoringTierPill');
     const roundWrap = document.getElementById('roundWrap');
     const scoreFields = document.getElementById('scoreFields');
     const adjustmentFields = document.getElementById('adjustmentFields');
@@ -1934,6 +1946,40 @@
       }
     }
 
+    function normalizeScoringTier(value) {
+      return scoringTierOptions[value] ? value : defaultScoringTier;
+    }
+
+    function normalizeEventItem(item) {
+      if (item && typeof item === 'object') {
+        return {
+          eventName: String(item.eventName || '').trim(),
+          scoringTier: normalizeScoringTier(item.scoringTier),
+        };
+      }
+
+      return {
+        eventName: String(item || '').trim(),
+        scoringTier: defaultScoringTier,
+      };
+    }
+
+    function getEventNames(events) {
+      return (events || []).map(event => normalizeEventItem(event).eventName);
+    }
+
+    function getEventConfigForName(eventName) {
+      return [...(loadedEventConfig.period5 || []), ...(loadedEventConfig.period6 || [])]
+        .map(normalizeEventItem)
+        .find(event => event.eventName === eventName) || null;
+    }
+
+    function updateScoringTierPill() {
+      const eventConfig = getEventConfigForName(eventSelect.value);
+      const tier = normalizeScoringTier(eventConfig && eventConfig.scoringTier);
+      scoringTierPill.textContent = scoringTierOptions[tier].pointsLabel;
+    }
+
     function populateEventSelects(options = {}) {
       const {
         preserveForm = false,
@@ -1944,6 +1990,8 @@
       const period6Events = loadedEventConfig.period6 || [];
       const activeEvents = activePeriod === 'Period 5' ? period5Events : period6Events;
       const allEvents = [...period5Events, ...period6Events];
+      const activeEventNames = getEventNames(activeEvents);
+      const allEventNames = getEventNames(allEvents);
 
       if (!allEvents.length) {
         eventSelect.innerHTML = '<option value="">Event list unavailable</option>';
@@ -1961,24 +2009,26 @@
       }
 
       eventSelect.innerHTML = activeEvents
+        .map(event => normalizeEventItem(event).eventName)
         .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
         .join('');
       adjustmentEvent.innerHTML = allEvents
+        .map(event => normalizeEventItem(event).eventName)
         .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
         .join('');
 
-      if (activeEvents.includes(previousScoreEvent)) {
+      if (activeEventNames.includes(previousScoreEvent)) {
         eventSelect.value = previousScoreEvent;
       }
-      if (!eventSelect.value && activeEvents.length) {
-        eventSelect.value = activeEvents[0];
+      if (!eventSelect.value && activeEventNames.length) {
+        eventSelect.value = activeEventNames[0];
       }
 
-      if (allEvents.includes(previousAdjustmentEvent)) {
+      if (allEventNames.includes(previousAdjustmentEvent)) {
         adjustmentEvent.value = previousAdjustmentEvent;
       }
-      if (!adjustmentEvent.value && allEvents.length) {
-        adjustmentEvent.value = allEvents[0];
+      if (!adjustmentEvent.value && allEventNames.length) {
+        adjustmentEvent.value = allEventNames[0];
       }
 
       eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
@@ -1988,6 +2038,7 @@
       // Live polling should refresh dropdown contents and saved-state UI, but it must never
       // clobber unsaved score-entry selections, note text, or the user's current round/event.
       if (preserveForm) {
+        updateScoringTierPill();
         renderSavedStatePanel();
         updateStickySaveBar();
         return;
@@ -2019,9 +2070,10 @@
     }
 
     function getEventListForPeriod(period) {
-      return period === 'Period 5'
+      const events = period === 'Period 5'
         ? (loadedEventConfig.period5 || [])
         : (loadedEventConfig.period6 || []);
+      return getEventNames(events);
     }
 
     function normalizeScoreSelection(selection) {
@@ -2060,6 +2112,7 @@
       }
 
       if (preserveForm) {
+        updateScoringTierPill();
         renderSavedStatePanel();
         updateStickySaveBar();
       }
@@ -2203,7 +2256,7 @@
 
       return {
         type: activeType,
-        period: (loadedEventConfig.period5 || []).includes(adjustmentEvent.value) ? 'Period 5' : 'Period 6',
+        period: getEventNames(loadedEventConfig.period5 || []).includes(adjustmentEvent.value) ? 'Period 5' : 'Period 6',
         eventName: adjustmentEvent.value,
         cohortKey: document.getElementById('adjustmentCohort').value,
         points: Number(adjustmentPoints.value),
@@ -2242,8 +2295,8 @@
 
     function cloneEvents(events) {
       return {
-        period5: Array.isArray(events && events.period5) ? [...events.period5] : [],
-        period6: Array.isArray(events && events.period6) ? [...events.period6] : [],
+        period5: Array.isArray(events && events.period5) ? events.period5.map(normalizeEventItem) : [],
+        period6: Array.isArray(events && events.period6) ? events.period6.map(normalizeEventItem) : [],
       };
     }
 
@@ -2269,23 +2322,31 @@
         return;
       }
 
-      container.innerHTML = events.map((eventName, index) => `
+      container.innerHTML = events.map((event, index) => {
+        const normalizedEvent = normalizeEventItem(event);
+        return `
         <div class="event-row" data-period-key="${periodKey}" data-index="${index}">
           <input
             type="text"
-            value="${escapeAttribute(eventName)}"
+            value="${escapeAttribute(normalizedEvent.eventName)}"
             data-role="event-name"
             data-period-key="${periodKey}"
             data-index="${index}"
             placeholder="Event name"
           >
+          <select data-role="scoring-tier" data-period-key="${periodKey}" data-index="${index}" aria-label="Scoring tier">
+            ${Object.entries(scoringTierOptions).map(([value, config]) => `
+              <option value="${escapeAttribute(value)}" ${normalizedEvent.scoringTier === value ? 'selected' : ''}>${escapeHtml(config.label)}</option>
+            `).join('')}
+          </select>
           <div class="event-row-controls">
             <button class="event-action-btn" type="button" data-action="up" data-period-key="${periodKey}" data-index="${index}" ${index === 0 ? 'disabled' : ''}>Up</button>
             <button class="event-action-btn" type="button" data-action="down" data-period-key="${periodKey}" data-index="${index}" ${index === events.length - 1 ? 'disabled' : ''}>Down</button>
             <button class="event-action-btn" type="button" data-action="delete" data-period-key="${periodKey}" data-index="${index}">Delete</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function markEventEditorDirty() {
@@ -2306,7 +2367,7 @@
 
     function addEventRow(periodKey) {
       mutateEventList(periodKey, list => {
-        list.push('');
+        list.push({ eventName: '', scoringTier: defaultScoringTier });
       });
     }
 
@@ -2331,15 +2392,29 @@
 
     function updateEventName(periodKey, index, value) {
       const next = cloneEvents(eventEditorState);
-      next[periodKey][index] = value;
+      next[periodKey][index] = {
+        ...normalizeEventItem(next[periodKey][index]),
+        eventName: value,
+      };
+      eventEditorState = next;
+      markEventEditorDirty();
+    }
+
+    function updateEventScoringTier(periodKey, index, value) {
+      const next = cloneEvents(eventEditorState);
+      next[periodKey][index] = {
+        ...normalizeEventItem(next[periodKey][index]),
+        scoringTier: normalizeScoringTier(value),
+      };
       eventEditorState = next;
       markEventEditorDirty();
     }
 
     function validateEventEditorState() {
-      const period5 = eventEditorState.period5.map(name => name.trim());
-      const period6 = eventEditorState.period6.map(name => name.trim());
+      const period5 = eventEditorState.period5.map(normalizeEventItem);
+      const period6 = eventEditorState.period6.map(normalizeEventItem);
       const allEvents = [...period5, ...period6];
+      const allNames = allEvents.map(event => event.eventName.trim());
 
       if (!period5.length) {
         throw new Error('Add at least one Period 5 event before saving.');
@@ -2349,12 +2424,12 @@
         throw new Error('Add at least one Period 6 event before saving.');
       }
 
-      if (allEvents.some(name => !name)) {
+      if (allNames.some(name => !name)) {
         throw new Error('Event names cannot be blank.');
       }
 
       const seen = new Set();
-      for (const name of allEvents) {
+      for (const name of allNames) {
         const key = name.toLowerCase();
         if (seen.has(key)) {
           throw new Error('Event names must be unique.');
@@ -2362,7 +2437,10 @@
         seen.add(key);
       }
 
-      return { period5, period6 };
+      return {
+        period5: period5.map(event => ({ eventName: event.eventName.trim(), scoringTier: normalizeScoringTier(event.scoringTier) })),
+        period6: period6.map(event => ({ eventName: event.eventName.trim(), scoringTier: normalizeScoringTier(event.scoringTier) })),
+      };
     }
 
     async function handleSaveEvents() {
@@ -2534,6 +2612,7 @@
       confirmedSavedEditKey = '';
       stickySaveState = 'idle';
       stickySaveMessage = '';
+      updateScoringTierPill();
       renderSavedStatePanel();
       updateStickySaveBar();
     }
@@ -2830,6 +2909,7 @@
 
     eventSelect.addEventListener('change', () => {
       if (suppressScoreSelectionGuard || activeType !== 'score') {
+        updateScoringTierPill();
         updateStickySaveBar();
         return;
       }
@@ -2851,8 +2931,9 @@
     adjustmentPreset.addEventListener('change', () => {
       if (adjustmentPreset.value) {
         adjustmentPoints.value = adjustmentPreset.value;
-        if (adjustmentPreset.selectedOptions[0].dataset.type === 'penalty') {
-          setEntryType('penalty');
+        const presetType = adjustmentPreset.selectedOptions[0].dataset.type;
+        if (presetType === 'penalty' || presetType === 'bonus') {
+          setEntryType(presetType);
         }
       }
       markFormDirtyAndRefresh();
@@ -2926,6 +3007,14 @@
         }
 
         updateEventName(event.target.dataset.periodKey, Number(event.target.dataset.index), event.target.value);
+      });
+
+      container.addEventListener('change', event => {
+        if (event.target.dataset.role !== 'scoring-tier') {
+          return;
+        }
+
+        updateEventScoringTier(event.target.dataset.periodKey, Number(event.target.dataset.index), event.target.value);
       });
     });
 

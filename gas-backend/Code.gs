@@ -13,16 +13,18 @@ const COHORTS = [
 
 const DEFAULT_EVENT_CONFIG = {
   period5: [
-    'Human Knot',
-    '3-Legged Wheelbarrow',
-    'Hula Hoop',
-    "Tug o' War",
+    { eventName: 'Dolphin Training', scoringTier: 'standard' },
+    { eventName: 'Cutie Crossing', scoringTier: 'standard' },
+    { eventName: "Tug o' War", scoringTier: 'standard' },
+    { eventName: 'River Crossing', scoringTier: 'standard' },
+    { eventName: 'Multi-Mini', scoringTier: 'standard' },
+    { eventName: 'Rapid Fire', scoringTier: 'standard' },
   ],
   period6: [
-    'Multi Mini',
-    'Dance Battle',
-    'Balloon Toss',
-    'Ice Bucket',
+    { eventName: 'Dance Battle', scoringTier: 'championship' },
+    { eventName: 'Table Race', scoringTier: 'championship' },
+    { eventName: 'Line Bucket Challenge', scoringTier: 'championship' },
+    { eventName: 'Water Limbo', scoringTier: 'championship' },
   ],
 };
 
@@ -42,7 +44,7 @@ const RAW_LOG_HEADERS = [
 ];
 
 const TOTALS_HEADERS = ['Event/Station', 'Cohort 10', 'Cohort 11', 'Cohort 12'];
-const EVENT_CONFIG_HEADERS = ['Period', 'Event Name', 'Sort Order', 'Active'];
+const EVENT_CONFIG_HEADERS = ['Period', 'Event Name', 'Sort Order', 'Active', 'Scoring Tier'];
 const ROUND_OPTIONS = ['Round 1', 'Round 2', 'Round 3', 'Round 4'];
 const PERIOD_KEYS = ['period5', 'period6'];
 const PERIOD_LABELS = {
@@ -54,11 +56,11 @@ const PERIOD_KEYS_BY_LABEL = {
   'Period 6': 'period6',
 };
 
-const PLACE_POINTS = {
-  '1st': 10,
-  '2nd': 7,
-  '3rd': 3,
+const SCORING_TIERS = {
+  standard: { '1st': 10, '2nd': 7, '3rd': 5 },
+  championship: { '1st': 40, '2nd': 30, '3rd': 20 },
 };
+const DEFAULT_SCORING_TIER = 'standard';
 
 function doGet(e) {
   return handleApiRequest_({
@@ -365,6 +367,8 @@ function configureEventConfigSheet_(sheet) {
     sheet.autoResizeColumns(1, EVENT_CONFIG_HEADERS.length);
   }
 
+  defaultMissingScoringTiers_(sheet);
+
   if (sheet.getLastRow() < 2) {
     writeEventConfig_(sheet, DEFAULT_EVENT_CONFIG);
   }
@@ -392,6 +396,7 @@ function getEventConfig_(spreadsheet) {
         eventName: String(row[1] || '').trim(),
         sortOrder: Number(row[2]) || 0,
         active: normalizeBoolean_(row[3]),
+        scoringTier: normalizeScoringTier_(row[4]),
       };
     })
     .filter(function (row) {
@@ -401,7 +406,10 @@ function getEventConfig_(spreadsheet) {
       return a.sortOrder - b.sortOrder;
     })
     .forEach(function (row) {
-      eventConfig[PERIOD_KEYS_BY_LABEL[row.period]].push(row.eventName);
+      eventConfig[PERIOD_KEYS_BY_LABEL[row.period]].push({
+        eventName: row.eventName,
+        scoringTier: row.scoringTier,
+      });
     });
 
   if (!eventConfig.period5.length && !eventConfig.period6.length) {
@@ -416,12 +424,14 @@ function writeEventConfig_(sheet, config) {
   const rows = [];
 
   PERIOD_KEYS.forEach(function (periodKey) {
-    config[periodKey].forEach(function (eventName, index) {
+    config[periodKey].forEach(function (event, index) {
+      const normalizedEvent = normalizeEventConfigItem_(event);
       rows.push([
         PERIOD_LABELS[periodKey],
-        eventName,
+        normalizedEvent.eventName,
         index + 1,
         true,
+        normalizedEvent.scoringTier,
       ]);
     });
   });
@@ -447,7 +457,8 @@ function buildScoreSummary_(spreadsheet, eventConfig) {
   const rowByEventName = {};
 
   PERIOD_KEYS.forEach(function (periodKey) {
-    eventConfig[periodKey].forEach(function (eventName) {
+    eventConfig[periodKey].forEach(function (event) {
+      const eventName = event.eventName;
       const row = {
         eventName: eventName,
         period: PERIOD_LABELS[periodKey],
@@ -636,12 +647,13 @@ function normalizeScorePayload_(payload, eventConfig) {
   const eventName = String(payload.eventName || '').trim();
   const round = String(payload.round || '').trim();
   const validEvents = period === 'Period 5' ? eventConfig.period5 : eventConfig.period6;
+  const eventConfigItem = getEventConfigItem_(validEvents, eventName);
 
   if (period !== 'Period 5' && period !== 'Period 6') {
     throw new Error('Select Period 5 or Period 6.');
   }
 
-  if (validEvents.indexOf(eventName) === -1) {
+  if (!eventConfigItem) {
     throw new Error('Select a valid station or event.');
   }
 
@@ -661,7 +673,7 @@ function normalizeScorePayload_(payload, eventConfig) {
     return placeValues.indexOf(place) === index;
   });
 
-  if (placeValues.some(function (place) { return !PLACE_POINTS[place]; })) {
+  if (placeValues.some(function (place) { return !getPointsForPlace_(place, eventConfigItem.scoringTier); })) {
     throw new Error('Assign 1st, 2nd, or 3rd for every cohort.');
   }
 
@@ -675,9 +687,9 @@ function normalizeScorePayload_(payload, eventConfig) {
     round: period === 'Period 5' ? round : '',
     places: places,
     points: {
-      cohort10: PLACE_POINTS[places.cohort10],
-      cohort11: PLACE_POINTS[places.cohort11],
-      cohort12: PLACE_POINTS[places.cohort12],
+      cohort10: getPointsForPlace_(places.cohort10, eventConfigItem.scoringTier),
+      cohort11: getPointsForPlace_(places.cohort11, eventConfigItem.scoringTier),
+      cohort12: getPointsForPlace_(places.cohort12, eventConfigItem.scoringTier),
     },
     type: 'score',
     note: String(payload.note || '').trim(),
@@ -736,7 +748,9 @@ function normalizeEventConfigPayload_(config) {
     period5: normalizeEventList_(config && config.period5),
     period6: normalizeEventList_(config && config.period6),
   };
-  const allNames = normalized.period5.concat(normalized.period6);
+  const allNames = normalized.period5.concat(normalized.period6).map(function (event) {
+    return event.eventName;
+  });
   const duplicateMap = {};
 
   if (!normalized.period5.length) {
@@ -765,23 +779,56 @@ function normalizeEventList_(list) {
   }
 
   return list.map(function (item) {
-    const eventName = String(item || '').trim();
+    const normalizedEvent = normalizeEventConfigItem_(item);
+    const eventName = normalizedEvent.eventName;
     if (!eventName) {
       throw new Error('Event names cannot be blank.');
     }
-    return eventName;
+    return normalizedEvent;
   });
 }
 
 function getAllConfiguredEvents_(eventConfig) {
-  return eventConfig.period5.concat(eventConfig.period6);
+  return eventConfig.period5.concat(eventConfig.period6).map(function (event) {
+    return event.eventName;
+  });
 }
 
 function cloneEventConfig_(config) {
   return {
-    period5: config.period5.slice(),
-    period6: config.period6.slice(),
+    period5: config.period5.map(normalizeEventConfigItem_),
+    period6: config.period6.map(normalizeEventConfigItem_),
   };
+}
+
+function normalizeEventConfigItem_(item) {
+  if (item && typeof item === 'object') {
+    return {
+      eventName: String(item.eventName || '').trim(),
+      scoringTier: normalizeScoringTier_(item.scoringTier),
+    };
+  }
+
+  return {
+    eventName: String(item || '').trim(),
+    scoringTier: DEFAULT_SCORING_TIER,
+  };
+}
+
+function normalizeScoringTier_(value) {
+  const tier = String(value || '').trim();
+  return SCORING_TIERS[tier] ? tier : DEFAULT_SCORING_TIER;
+}
+
+function getEventConfigItem_(events, eventName) {
+  return events.find(function (event) {
+    return event.eventName === eventName;
+  }) || null;
+}
+
+function getPointsForPlace_(place, scoringTier) {
+  const tier = SCORING_TIERS[scoringTier] || SCORING_TIERS[DEFAULT_SCORING_TIER];
+  return tier[place] || 0;
 }
 
 function createEmptyPoints_() {
@@ -800,7 +847,8 @@ function createEntryState_(eventConfig) {
 }
 
 function createPeriod5EntryState_(events) {
-  return events.reduce(function (accumulator, eventName) {
+  return events.reduce(function (accumulator, event) {
+    const eventName = event.eventName;
     accumulator[eventName] = {
       savedRounds: ROUND_OPTIONS.reduce(function (roundAccumulator, round) {
         roundAccumulator[round] = createSavedScoreState_();
@@ -815,7 +863,8 @@ function createPeriod5EntryState_(events) {
 }
 
 function createPeriod6EntryState_(events) {
-  return events.reduce(function (accumulator, eventName) {
+  return events.reduce(function (accumulator, event) {
+    const eventName = event.eventName;
     accumulator[eventName] = createSavedScoreState_();
     return accumulator;
   }, {});
@@ -993,6 +1042,28 @@ function normalizeBoolean_(value) {
   }
 
   return String(value).toLowerCase() !== 'false' && String(value) !== '0' && String(value).trim() !== '';
+}
+
+function defaultMissingScoringTiers_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return;
+  }
+
+  const tierRange = sheet.getRange(2, EVENT_CONFIG_HEADERS.length, lastRow - 1, 1);
+  const values = tierRange.getValues();
+  let changed = false;
+  const normalizedValues = values.map(function (row) {
+    if (SCORING_TIERS[String(row[0] || '').trim()]) {
+      return row;
+    }
+    changed = true;
+    return [DEFAULT_SCORING_TIER];
+  });
+
+  if (changed) {
+    tierRange.setValues(normalizedValues);
+  }
 }
 
 function waitForLock_(lock, message) {
