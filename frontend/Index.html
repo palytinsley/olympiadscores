@@ -135,9 +135,9 @@
     }
 
     .app-title {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
       font-size: clamp(1rem, 3.7vw, 1.15rem);
       font-weight: 900;
@@ -146,8 +146,13 @@
       text-transform: uppercase;
     }
 
-    .app-title i {
-      font-size: 1.1em;
+    .app-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+      transform: translateY(-1px);
     }
 
     .sync-pill {
@@ -1264,6 +1269,11 @@
         --nav-offset: calc(70px + env(safe-area-inset-bottom));
       }
 
+      .app-logo {
+        width: 28px;
+        height: 28px;
+      }
+
       main {
         width: calc(100vw - 24px);
         max-width: calc(100vw - 24px);
@@ -1427,7 +1437,7 @@
 <body>
   <header class="app-header">
     <div class="title-row">
-      <div class="app-title"><i class="ti ti-scoreboard"></i><span>Olympiad Scorer</span></div>
+      <div class="app-title"><img class="app-logo" src="./assets/icons/hero%20logo.png" alt="" aria-hidden="true"><span>Olympiad Scorer</span></div>
       <div class="sync-pill"><i class="ti ti-refresh"></i><span id="syncText">Syncing</span></div>
     </div>
     <div class="debug-viewport hidden" id="viewportDebug" aria-hidden="true"></div>
