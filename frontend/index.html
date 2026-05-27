@@ -1456,9 +1456,9 @@
           </div>
 
           <div class="adjustment-toggle" role="group" aria-label="Entry type">
-            <button class="type-btn active" type="button" data-type="score">Score</button>
-            <button class="type-btn" type="button" data-type="penalty">Penalty</button>
-            <button class="type-btn" type="button" data-type="bonus">Bonus</button>
+            <button class="type-btn active" type="button" data-type="score">Stations</button>
+            <button class="type-btn" type="button" data-type="multi">Multi</button>
+            <button class="type-btn" type="button" data-type="adjustment">Bonus/Penalty</button>
           </div>
 
           <form id="scoreForm">
@@ -1527,6 +1527,39 @@
                     <button class="place-btn" type="button" data-place="2nd" data-target="place12">2nd</button>
                     <button class="place-btn" type="button" data-place="3rd" data-target="place12">3rd</button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="multiFields" class="hidden">
+              <div class="control-grid two" style="margin-top: 10px;">
+                <div>
+                  <label for="multiEventSelect">Event</label>
+                  <select id="multiEventSelect" required>
+                    <option value="Multi">Multi</option>
+                    <option value="Rapid Fire">Rapid Fire</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="multiRoundSelect">Round</label>
+                  <select id="multiRoundSelect" required></select>
+                </div>
+              </div>
+              <div class="place-grid">
+                <div class="cohort-box cohort10">
+                  <div class="cohort-heading"><span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span></div>
+                  <label for="multiPoints10">Points</label>
+                  <input id="multiPoints10" class="multi-entry-input" type="number" step="1" inputmode="numeric" required>
+                </div>
+                <div class="cohort-box cohort11">
+                  <div class="cohort-heading"><span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span></div>
+                  <label for="multiPoints11">Points</label>
+                  <input id="multiPoints11" class="multi-entry-input" type="number" step="1" inputmode="numeric" required>
+                </div>
+                <div class="cohort-box cohort12">
+                  <div class="cohort-heading"><span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span></div>
+                  <label for="multiPoints12">Points</label>
+                  <input id="multiPoints12" class="multi-entry-input" type="number" step="1" inputmode="numeric" required>
                 </div>
               </div>
             </div>
@@ -1615,7 +1648,7 @@
                     <span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span>
                     <span class="saved-state-pill" id="tardyDeduction10">0 pts</span>
                   </div>
-                  <label for="tardyCount10">Tardies</label>
+                  <label for="tardyCount10">Students Tardy</label>
                   <input id="tardyCount10" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0">
                 </div>
                 <div class="cohort-box cohort11">
@@ -1623,7 +1656,7 @@
                     <span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span>
                     <span class="saved-state-pill" id="tardyDeduction11">0 pts</span>
                   </div>
-                  <label for="tardyCount11">Tardies</label>
+                  <label for="tardyCount11">Students Tardy</label>
                   <input id="tardyCount11" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0">
                 </div>
                 <div class="cohort-box cohort12">
@@ -1631,7 +1664,7 @@
                     <span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span>
                     <span class="saved-state-pill" id="tardyDeduction12">0 pts</span>
                   </div>
-                  <label for="tardyCount12">Tardies</label>
+                  <label for="tardyCount12">Students Tardy</label>
                   <input id="tardyCount12" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0">
                 </div>
               </div>
@@ -1654,12 +1687,16 @@
               </div>
               <div class="control-grid two" style="margin-top: 10px;">
                 <div>
+                  <label for="adjustmentType">Type</label>
+                  <select id="adjustmentType">
+                    <option value="bonus">Bonus</option>
+                    <option value="penalty">Penalty</option>
+                  </select>
+                </div>
+                <div>
                   <label for="adjustmentPreset">Preset</label>
                   <select id="adjustmentPreset">
                     <option value="">Custom points</option>
-                    <optgroup label="Rapid Fire">
-                      <option value="5" data-type="bonus">Rapid Fire Win (+5 pts)</option>
-                    </optgroup>
                     <optgroup label="Sportsmanship">
                       <option value="1" data-type="penalty">Late penalty: −1 per student</option>
                       <option value="5" data-type="penalty">Phone penalty: −5</option>
@@ -1708,31 +1745,24 @@
               <p class="settings-card-copy">Edit the live event lists here. Period 5 keeps rounds. Period 6 stays event-only.</p>
             </div>
 
-            <div class="settings-stack">
-              <section class="settings-card">
-                <div class="settings-card-header">
-                  <h3 class="settings-card-title">Period 5 — Stations & Mini Events</h3>
-                  <p class="settings-card-copy">Stations use the Round selector. Multi-Mini and Rapid Fire are scored here too.</p>
-                </div>
-                <div class="event-manager-list" id="period5EventList"></div>
-                <button class="add-event-btn" id="addPeriod5EventBtn" type="button">
-                  <i class="ti ti-plus"></i>
-                  <span>Add Period 5 Event</span>
-                </button>
-              </section>
-
-              <section class="settings-card">
-                <div class="settings-card-header">
-                  <h3 class="settings-card-title">Period 6 — Cohort Competitions</h3>
-                  <p class="settings-card-copy">These appear without the Round selector.</p>
-                </div>
-                <div class="event-manager-list" id="period6EventList"></div>
-                <button class="add-event-btn" id="addPeriod6EventBtn" type="button">
-                  <i class="ti ti-plus"></i>
-                  <span>Add Period 6 Event</span>
-                </button>
-              </section>
+            <div class="control-grid two" style="margin-bottom: 10px;">
+              <div>
+                <label for="settingsPeriodSelect">Period</label>
+                <select id="settingsPeriodSelect">
+                  <option value="period5">Period 5</option>
+                  <option value="period6">Period 6</option>
+                </select>
+              </div>
+              <div>
+                <label for="settingsGroupSelect">Category</label>
+                <select id="settingsGroupSelect"></select>
+              </div>
             </div>
+            <div class="event-manager-list" id="eventGroupList"></div>
+            <button class="add-event-btn" id="addEventGroupItemBtn" type="button">
+              <i class="ti ti-plus"></i>
+              <span>Add Item</span>
+            </button>
 
             <button class="submit-btn" id="saveEventsBtn" type="button">
               <i class="ti ti-device-floppy"></i>
@@ -1801,12 +1831,25 @@
       standard: { label: 'Standard (10 / 7 / 5)', pointsLabel: '10 / 7 / 5' },
       championship: { label: 'Championship (40 / 30 / 20)', pointsLabel: '40 / 30 / 20' },
     };
+    const defaultEventGroups = {
+      period5: {
+        stations: ['Dolphin Training', 'Cutie Crossing', "Tug o' War", 'River Crossing'],
+        multi: ['Donut Dangle', 'Balloon Chase', 'Stump Tug of War'],
+        rapidFire: ['Best Dad Joke', 'Best Bird Call', 'Guess the Tune'],
+      },
+      period6: {
+        multiMini: ['Donut Dangle', 'Balloon Chase', 'Stump Tug of War'],
+        championship: ['Dance Battle', 'Table Race', 'Line Sponge Challenge'],
+      },
+    };
     const defaultScoringTier = 'standard';
     let activePeriod = 'Period 5';
     let activeType = 'score';
     let latestData = null;
     let loadedEventConfig = { period5: [], period6: [] };
+    let loadedEventGroups = structuredClone(defaultEventGroups);
     let eventEditorState = { period5: [], period6: [] };
+    let eventGroupEditorState = normalizeEventGroups(defaultEventGroups);
     let eventEditorDirty = false;
     let savingEventConfig = false;
     let formDirty = false;
@@ -1839,13 +1882,17 @@
     const scoreSelectionFields = document.getElementById('scoreSelectionFields');
     const roundWrap = document.getElementById('roundWrap');
     const scoreFields = document.getElementById('scoreFields');
+    const multiFields = document.getElementById('multiFields');
     const adjustmentFields = document.getElementById('adjustmentFields');
     const classColorFields = document.getElementById('classColorFields');
     const tardyFields = document.getElementById('tardyFields');
     const adjustmentToggle = document.querySelector('.adjustment-toggle');
     const adjustmentEvent = document.getElementById('adjustmentEvent');
+    const adjustmentType = document.getElementById('adjustmentType');
     const adjustmentPreset = document.getElementById('adjustmentPreset');
     const adjustmentPoints = document.getElementById('adjustmentPoints');
+    const multiEventSelect = document.getElementById('multiEventSelect');
+    const multiRoundSelect = document.getElementById('multiRoundSelect');
     const noteInput = document.getElementById('noteInput');
     const breakdownList = document.getElementById('breakdownList');
     const leaderboardList = document.getElementById('leaderboardList');
@@ -1853,10 +1900,10 @@
     const resetScoresBtn = document.getElementById('resetScoresBtn');
     const secretEventBtn = document.getElementById('secretEventBtn');
     const sheetStatusBox = document.getElementById('sheetStatusBox');
-    const period5EventList = document.getElementById('period5EventList');
-    const period6EventList = document.getElementById('period6EventList');
-    const addPeriod5EventBtn = document.getElementById('addPeriod5EventBtn');
-    const addPeriod6EventBtn = document.getElementById('addPeriod6EventBtn');
+    const settingsPeriodSelect = document.getElementById('settingsPeriodSelect');
+    const settingsGroupSelect = document.getElementById('settingsGroupSelect');
+    const eventGroupList = document.getElementById('eventGroupList');
+    const addEventGroupItemBtn = document.getElementById('addEventGroupItemBtn');
     const saveEventsBtn = document.getElementById('saveEventsBtn');
     const eventStatusBox = document.getElementById('eventStatusBox');
     const roundSelect = document.getElementById('roundSelect');
@@ -2048,8 +2095,9 @@
       renderBreakdown(latestData.breakdown);
       renderLeaderboard(latestData.totals);
       applyLoadedEventConfig(latestData.events);
+      applyLoadedEventGroups(latestData.eventGroups);
       if (!eventEditorDirty && !savingEventConfig) {
-        setEventEditorState(latestData.events);
+        setEventEditorState(latestData.events, latestData.eventGroups);
       }
       if (activeType === 'score' && !formDirty) {
         syncScoreFormWithSelection({ preserveExpandedState: true });
@@ -2091,6 +2139,35 @@
       return (events || []).map(event => normalizeEventItem(event).eventName);
     }
 
+    function normalizeStringList(list, fallback = []) {
+      const source = Array.isArray(list) ? list : fallback;
+      const seen = new Set();
+      return source
+        .map(item => String(item || '').trim())
+        .filter(item => {
+          const key = item.toLowerCase();
+          if (!item || seen.has(key)) {
+            return false;
+          }
+          seen.add(key);
+          return true;
+        });
+    }
+
+    function normalizeEventGroups(groups = {}) {
+      return {
+        period5: {
+          stations: normalizeStringList(groups.period5 && groups.period5.stations, defaultEventGroups.period5.stations),
+          multi: normalizeStringList(groups.period5 && groups.period5.multi, defaultEventGroups.period5.multi),
+          rapidFire: normalizeStringList(groups.period5 && groups.period5.rapidFire, defaultEventGroups.period5.rapidFire),
+        },
+        period6: {
+          multiMini: normalizeStringList(groups.period6 && groups.period6.multiMini, defaultEventGroups.period6.multiMini),
+          championship: normalizeStringList(groups.period6 && groups.period6.championship, defaultEventGroups.period6.championship),
+        },
+      };
+    }
+
     function getEventConfigForName(eventName) {
       return [...(loadedEventConfig.period5 || []), ...(loadedEventConfig.period6 || [])]
         .map(normalizeEventItem)
@@ -2101,6 +2178,10 @@
       const eventConfig = getEventConfigForName(eventSelect.value);
       const tier = normalizeScoringTier(eventConfig && eventConfig.scoringTier);
       scoringTierPill.textContent = scoringTierOptions[tier].pointsLabel;
+    }
+
+    function isMultiEventName(eventName) {
+      return eventName === 'Multi' || eventName === 'Rapid Fire' || eventName === 'Multi Mini';
     }
 
     function getCustomEntryType(eventName, period) {
@@ -2133,10 +2214,13 @@
       const customType = getCurrentCustomEntryType();
       const isCustom = Boolean(customType);
       const showScoreFields = activeType === 'score' && !isCustom;
-      const showAdjustmentFields = activeType !== 'score' && !isCustom;
+      const showMultiFields = activeType === 'multi';
+      const showAdjustmentFields = activeType === 'adjustment' && !isCustom;
 
       scoreSelectionFields.classList.toggle('hidden', activeType !== 'score' && !isCustom);
       scoreFields.classList.toggle('hidden', !showScoreFields);
+      multiFields.classList.toggle('hidden', !showMultiFields);
+      multiEventSelect.closest('div').classList.toggle('hidden', activePeriod !== 'Period 5');
       adjustmentFields.classList.toggle('hidden', !showAdjustmentFields);
       classColorFields.classList.toggle('hidden', customType !== 'classcolor');
       tardyFields.classList.toggle('hidden', customType !== 'tardy');
@@ -2145,12 +2229,32 @@
       roundSelect.required = activePeriod === 'Period 5' && !isCustom && activeType === 'score';
       noteInput.required = showAdjustmentFields;
       adjustmentPoints.required = showAdjustmentFields;
+      multiEventSelect.required = showMultiFields;
+      multiRoundSelect.required = showMultiFields;
+      document.querySelectorAll('.multi-entry-input').forEach(input => {
+        input.required = showMultiFields;
+      });
       document.querySelectorAll('.place-select').forEach(select => {
         select.required = showScoreFields;
       });
       setRequiredForControls(classColorFields, customType === 'classcolor');
       setRequiredForControls(tardyFields, false);
       updateCustomPreviews();
+    }
+
+    function populateMultiRoundSelect() {
+      const previous = multiRoundSelect.value;
+      const options = activePeriod === 'Period 6'
+        ? loadedEventGroups.period6.multiMini
+        : multiEventSelect.value === 'Rapid Fire'
+          ? loadedEventGroups.period5.rapidFire
+          : loadedEventGroups.period5.multi;
+      multiRoundSelect.innerHTML = options
+        .map(option => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
+        .join('');
+      if (options.includes(previous)) {
+        multiRoundSelect.value = previous;
+      }
     }
 
     function populateEventSelects(options = {}) {
@@ -2161,8 +2265,10 @@
       const previousAdjustmentEvent = adjustmentEvent.value;
       const period5Events = loadedEventConfig.period5 || [];
       const period6Events = loadedEventConfig.period6 || [];
-      const activeEvents = activePeriod === 'Period 5' ? period5Events : period6Events;
-      const allEvents = [...period5Events, ...period6Events];
+      const activeEvents = (activePeriod === 'Period 5' ? period5Events : period6Events)
+        .filter(event => activeType !== 'score' || !isMultiEventName(normalizeEventItem(event).eventName));
+      const allEvents = [...period5Events, ...period6Events]
+        .filter(event => !isMultiEventName(normalizeEventItem(event).eventName));
       const activeEventNames = getEventNames(activeEvents);
       const allEventNames = getEventNames(allEvents);
 
@@ -2271,6 +2377,7 @@
       activePeriod = nextSelection.period;
       updatePeriodButtons();
       populateEventSelects({ preserveForm: true });
+      populateMultiRoundSelect();
 
       if (nextSelection.eventName && getEventListForPeriod(nextSelection.period).includes(nextSelection.eventName)) {
         eventSelect.value = nextSelection.eventName;
@@ -2354,7 +2461,9 @@
       document.querySelectorAll('.type-btn').forEach(button => {
         button.classList.toggle('active', button.dataset.type === type);
       });
+      populateEventSelects({ preserveForm: true });
       updateEntryFieldVisibility();
+      populateMultiRoundSelect();
       if (type === 'score') {
         syncScoreFormWithSelection({ preserveExpandedState: true });
       } else {
@@ -2401,6 +2510,13 @@
     function clearAdjustmentFormAfterSubmit() {
       adjustmentPoints.value = '';
       adjustmentPreset.value = '';
+      noteInput.value = '';
+    }
+
+    function clearMultiFormAfterSubmit() {
+      document.querySelectorAll('.multi-entry-input').forEach(input => {
+        input.value = '';
+      });
       noteInput.value = '';
     }
 
@@ -2489,7 +2605,7 @@
       if (customType === 'tardy') {
         return {
           type: 'tardy',
-          period: 'Period 6',
+          period: activePeriod,
           eventName: 'Tardy',
           cohorts: {
             cohort10: { tardies: readWholeNumberInput('tardyCount10') },
@@ -2515,8 +2631,23 @@
         };
       }
 
+      if (activeType === 'multi') {
+        return {
+          type: 'multi',
+          period: activePeriod,
+          eventName: activePeriod === 'Period 6' ? 'Multi Mini' : multiEventSelect.value,
+          round: multiRoundSelect.value,
+          points: {
+            cohort10: Number(document.getElementById('multiPoints10').value),
+            cohort11: Number(document.getElementById('multiPoints11').value),
+            cohort12: Number(document.getElementById('multiPoints12').value),
+          },
+          note: noteInput.value,
+        };
+      }
+
       return {
-        type: activeType,
+        type: adjustmentType.value,
         period: getEventNames(loadedEventConfig.period5 || []).includes(adjustmentEvent.value) ? 'Period 5' : 'Period 6',
         eventName: adjustmentEvent.value,
         cohortKey: document.getElementById('adjustmentCohort').value,
@@ -2539,8 +2670,10 @@
           entryState: result.entryState,
           events: result.events || loadedEventConfig,
         });
-        if (activeType !== 'score') {
+        if (activeType === 'adjustment') {
           clearAdjustmentFormAfterSubmit();
+        } else if (activeType === 'multi') {
+          clearMultiFormAfterSubmit();
         } else {
           syncScoreFormWithSelection({ preserveExpandedState: true });
         }
@@ -2566,15 +2699,21 @@
       populateEventSelects({ preserveForm: formDirty });
     }
 
-    function setEventEditorState(events) {
+    function applyLoadedEventGroups(groups) {
+      loadedEventGroups = normalizeEventGroups(groups);
+      populateMultiRoundSelect();
+    }
+
+    function setEventEditorState(events, groups = loadedEventGroups) {
       eventEditorState = cloneEvents(events);
+      eventGroupEditorState = normalizeEventGroups(groups);
       eventEditorDirty = false;
       renderEventEditor();
     }
 
     function renderEventEditor() {
-      renderEventRows(period5EventList, eventEditorState.period5, 'period5');
-      renderEventRows(period6EventList, eventEditorState.period6, 'period6');
+      renderEventGroupControls();
+      renderEventGroupEditor();
     }
 
     function renderEventRows(container, events, periodKey) {
@@ -2608,6 +2747,56 @@
         </div>
       `;
       }).join('');
+    }
+
+    function getSettingsGroupOptions(periodKey) {
+      return periodKey === 'period5'
+        ? [
+          { value: 'stations', label: 'Station' },
+          { value: 'multi', label: 'Multi' },
+          { value: 'rapidFire', label: 'Rapid Fire' },
+        ]
+        : [
+          { value: 'multiMini', label: 'Multi Mini' },
+          { value: 'championship', label: 'Championship Events' },
+        ];
+    }
+
+    function renderEventGroupControls() {
+      const periodKey = settingsPeriodSelect.value === 'period6' ? 'period6' : 'period5';
+      const currentValue = settingsGroupSelect.value;
+      const options = getSettingsGroupOptions(periodKey);
+      settingsGroupSelect.innerHTML = options
+        .map(option => `<option value="${escapeAttribute(option.value)}">${escapeHtml(option.label)}</option>`)
+        .join('');
+      settingsGroupSelect.value = options.some(option => option.value === currentValue)
+        ? currentValue
+        : options[0].value;
+    }
+
+    function renderEventGroupEditor() {
+      const periodKey = settingsPeriodSelect.value === 'period6' ? 'period6' : 'period5';
+      const groupKey = settingsGroupSelect.value;
+      const items = eventGroupEditorState[periodKey][groupKey] || [];
+      const canDelete = items.length > 1;
+      eventGroupList.innerHTML = items.map((item, index) => `
+        <div class="event-row" data-group-period="${periodKey}" data-group-key="${groupKey}" data-index="${index}">
+          <input
+            type="text"
+            value="${escapeAttribute(item)}"
+            data-role="group-item-name"
+            data-group-period="${periodKey}"
+            data-group-key="${groupKey}"
+            data-index="${index}"
+            placeholder="Name"
+          >
+          <div class="event-row-controls">
+            <button class="event-action-btn" type="button" data-group-action="up" data-group-period="${periodKey}" data-group-key="${groupKey}" data-index="${index}" ${index === 0 ? 'disabled' : ''}>Up</button>
+            <button class="event-action-btn" type="button" data-group-action="down" data-group-period="${periodKey}" data-group-key="${groupKey}" data-index="${index}" ${index === items.length - 1 ? 'disabled' : ''}>Down</button>
+            <button class="event-action-btn" type="button" data-group-action="delete" data-group-period="${periodKey}" data-group-key="${groupKey}" data-index="${index}" ${canDelete ? '' : 'disabled'}>Delete</button>
+          </div>
+        </div>
+      `).join('');
     }
 
     function markEventEditorDirty() {
@@ -2651,6 +2840,50 @@
       });
     }
 
+    function mutateEventGroup(periodKey, groupKey, mutator) {
+      const next = JSON.parse(JSON.stringify(eventGroupEditorState));
+      mutator(next[periodKey][groupKey]);
+      eventGroupEditorState = next;
+      markEventEditorDirty();
+      renderEventGroupControls();
+      renderEventGroupEditor();
+    }
+
+    function addEventGroupItem() {
+      const periodKey = settingsPeriodSelect.value === 'period6' ? 'period6' : 'period5';
+      const groupKey = settingsGroupSelect.value;
+      mutateEventGroup(periodKey, groupKey, list => {
+        list.push('New Item');
+      });
+    }
+
+    function updateEventGroupItem(periodKey, groupKey, index, value) {
+      const next = JSON.parse(JSON.stringify(eventGroupEditorState));
+      next[periodKey][groupKey][index] = value;
+      eventGroupEditorState = next;
+      markEventEditorDirty();
+    }
+
+    function moveEventGroupItem(periodKey, groupKey, index, direction) {
+      mutateEventGroup(periodKey, groupKey, list => {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= list.length) {
+          return;
+        }
+        const currentValue = list[index];
+        list[index] = list[targetIndex];
+        list[targetIndex] = currentValue;
+      });
+    }
+
+    function deleteEventGroupItem(periodKey, groupKey, index) {
+      mutateEventGroup(periodKey, groupKey, list => {
+        if (list.length > 1) {
+          list.splice(index, 1);
+        }
+      });
+    }
+
     function updateEventName(periodKey, index, value) {
       const next = cloneEvents(eventEditorState);
       next[periodKey][index] = {
@@ -2672,8 +2905,18 @@
     }
 
     function validateEventEditorState() {
-      const period5 = eventEditorState.period5.map(normalizeEventItem);
-      const period6 = eventEditorState.period6.map(normalizeEventItem);
+      const groups = normalizeEventGroups(eventGroupEditorState);
+      const period5 = [
+        { eventName: 'Class Color', scoringTier: defaultScoringTier },
+        ...groups.period5.stations.map(eventName => ({ eventName, scoringTier: defaultScoringTier })),
+        { eventName: 'Multi', scoringTier: defaultScoringTier },
+        { eventName: 'Rapid Fire', scoringTier: defaultScoringTier },
+      ].map(normalizeEventItem);
+      const period6 = [
+        { eventName: 'Tardy', scoringTier: defaultScoringTier },
+        { eventName: 'Multi Mini', scoringTier: defaultScoringTier },
+        ...groups.period6.championship.map(eventName => ({ eventName, scoringTier: 'championship' })),
+      ].map(normalizeEventItem);
       const allEvents = [...period5, ...period6];
       const allNames = allEvents.map(event => event.eventName.trim());
 
@@ -2701,6 +2944,7 @@
       return {
         period5: period5.map(event => ({ eventName: event.eventName.trim(), scoringTier: normalizeScoringTier(event.scoringTier) })),
         period6: period6.map(event => ({ eventName: event.eventName.trim(), scoringTier: normalizeScoringTier(event.scoringTier) })),
+        eventGroups: groups,
       };
     }
 
@@ -2896,6 +3140,13 @@
     function getCurrentSavedSummary() {
       const entryState = getCurrentEntryState();
       if (activeType !== 'score') {
+        if (activeType === 'multi') {
+          const multiEventName = activePeriod === 'Period 6' ? 'Multi Mini' : (multiEventSelect.value || 'Multi');
+          return {
+            title: `${multiEventName}${multiRoundSelect.value ? ` • ${multiRoundSelect.value}` : ''}`,
+            status: 'Multi entries save manually.',
+          };
+        }
         return {
           title: 'Adjustments save manually',
           status: 'Penalty and bonus entries are not autosaved.',
@@ -2945,7 +3196,9 @@
     function getStickySavePresentation() {
       const nothingSelected = activeType === 'score'
         ? !eventSelect.value
-        : !adjustmentEvent.value;
+        : activeType === 'multi'
+          ? !multiEventSelect.value || !multiRoundSelect.value
+          : !adjustmentEvent.value;
       const summary = getCurrentSavedSummary();
       const selectedScoreState = activeType === 'score' && eventSelect.value ? getSelectedScoreState() : createBlankScoreState();
 
@@ -2972,12 +3225,13 @@
       }
 
       if (activeType !== 'score') {
+        const entryKind = activeType === 'multi' ? 'Multi entry' : 'Adjustment';
         if (formDirty) {
           return {
             label: 'Unsaved Changes',
             labelClass: 'pending',
             title: summary.title,
-            status: 'Adjustment ready to save manually.',
+            status: `${entryKind} ready to save manually.`,
             statusClass: '',
             buttonText: 'Save',
           };
@@ -2998,7 +3252,7 @@
           label: 'Ready to Save',
           labelClass: '',
           title: nothingSelected ? 'Select an event' : summary.title,
-          status: nothingSelected ? 'Choose an adjustment, then save manually.' : summary.status,
+          status: nothingSelected ? `Choose a ${entryKind.toLowerCase()}, then save manually.` : summary.status,
           statusClass: '',
           buttonText: 'Save',
         };
@@ -3090,7 +3344,12 @@
           syncScoreFormWithSelection({ preserveExpandedState: true });
         } else {
           formDirty = false;
-          clearAdjustmentFormAfterSubmit();
+          if (activeType === 'adjustment') {
+            clearAdjustmentFormAfterSubmit();
+          }
+          if (activeType === 'multi') {
+            clearMultiFormAfterSubmit();
+          }
           renderSavedStatePanel();
           updateStickySaveBar();
         }
@@ -3209,7 +3468,16 @@
     });
     noteInput.addEventListener('input', markFormDirtyAndRefresh);
     adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
+    adjustmentType.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
+    multiEventSelect.addEventListener('change', () => {
+      populateMultiRoundSelect();
+      markFormDirtyAndRefresh();
+    });
+    multiRoundSelect.addEventListener('change', markFormDirtyAndRefresh);
+    document.querySelectorAll('.multi-entry-input').forEach(input => {
+      input.addEventListener('input', markFormDirtyAndRefresh);
+    });
     document.getElementById('adjustmentCohort').addEventListener('change', markFormDirtyAndRefresh);
     document.querySelectorAll('.custom-entry-input').forEach(input => {
       input.addEventListener('input', () => {
@@ -3223,7 +3491,7 @@
         adjustmentPoints.value = adjustmentPreset.value;
         const presetType = adjustmentPreset.selectedOptions[0].dataset.type;
         if (presetType === 'penalty' || presetType === 'bonus') {
-          setEntryType(presetType);
+          adjustmentType.value = presetType;
         }
       }
       markFormDirtyAndRefresh();
@@ -3268,52 +3536,47 @@
       renderBreakdown((latestData && latestData.breakdown) || []);
     });
 
-    [period5EventList, period6EventList].forEach(container => {
-      container.addEventListener('click', event => {
-        const button = event.target.closest('[data-action]');
-        if (!button) {
-          return;
-        }
+    settingsPeriodSelect.addEventListener('change', () => {
+      renderEventGroupControls();
+      renderEventGroupEditor();
+    });
+    settingsGroupSelect.addEventListener('change', renderEventGroupEditor);
+    eventGroupList.addEventListener('click', event => {
+      const button = event.target.closest('[data-group-action]');
+      if (!button) {
+        return;
+      }
 
-        const periodKey = button.dataset.periodKey;
-        const index = Number(button.dataset.index);
-
-        if (button.dataset.action === 'up') {
-          moveEvent(periodKey, index, -1);
-        }
-
-        if (button.dataset.action === 'down') {
-          moveEvent(periodKey, index, 1);
-        }
-
-        if (button.dataset.action === 'delete') {
-          deleteEvent(periodKey, index);
-        }
-      });
-
-      container.addEventListener('input', event => {
-        if (event.target.dataset.role !== 'event-name') {
-          return;
-        }
-
-        updateEventName(event.target.dataset.periodKey, Number(event.target.dataset.index), event.target.value);
-      });
-
-      container.addEventListener('change', event => {
-        if (event.target.dataset.role !== 'scoring-tier') {
-          return;
-        }
-
-        updateEventScoringTier(event.target.dataset.periodKey, Number(event.target.dataset.index), event.target.value);
-      });
+      const periodKey = button.dataset.groupPeriod;
+      const groupKey = button.dataset.groupKey;
+      const index = Number(button.dataset.index);
+      if (button.dataset.groupAction === 'up') {
+        moveEventGroupItem(periodKey, groupKey, index, -1);
+      }
+      if (button.dataset.groupAction === 'down') {
+        moveEventGroupItem(periodKey, groupKey, index, 1);
+      }
+      if (button.dataset.groupAction === 'delete') {
+        deleteEventGroupItem(periodKey, groupKey, index);
+      }
+    });
+    eventGroupList.addEventListener('input', event => {
+      if (event.target.dataset.role !== 'group-item-name') {
+        return;
+      }
+      updateEventGroupItem(
+        event.target.dataset.groupPeriod,
+        event.target.dataset.groupKey,
+        Number(event.target.dataset.index),
+        event.target.value
+      );
     });
 
     scoreForm.addEventListener('submit', handleSubmit);
     openSheetBtn.addEventListener('click', handleOpenSheet);
     resetScoresBtn.addEventListener('click', handleResetAllScores);
     secretEventBtn.addEventListener('click', triggerSecretEvent);
-    addPeriod5EventBtn.addEventListener('click', () => addEventRow('period5'));
-    addPeriod6EventBtn.addEventListener('click', () => addEventRow('period6'));
+    addEventGroupItemBtn.addEventListener('click', addEventGroupItem);
     saveEventsBtn.addEventListener('click', handleSaveEvents);
     window.addEventListener('resize', updateLayoutMetrics);
     window.addEventListener('orientationchange', updateLayoutMetrics);
@@ -3325,6 +3588,7 @@
 
     renderEventEditor();
     populateEventSelects();
+    populateMultiRoundSelect();
     updatePeriodButtons();
     setEntryType('score');
     updatePlaceOptions();
