@@ -13,19 +13,33 @@ const COHORTS = [
 
 const DEFAULT_EVENT_CONFIG = {
   period5: [
+    { eventName: 'Class Color', scoringTier: 'standard' },
     { eventName: 'Dolphin Training', scoringTier: 'standard' },
     { eventName: 'Cutie Crossing', scoringTier: 'standard' },
     { eventName: "Tug o' War", scoringTier: 'standard' },
     { eventName: 'River Crossing', scoringTier: 'standard' },
-    { eventName: 'Multi-Mini', scoringTier: 'standard' },
+    { eventName: 'Multi', scoringTier: 'standard' },
     { eventName: 'Rapid Fire', scoringTier: 'standard' },
   ],
   period6: [
+    { eventName: 'Tardy', scoringTier: 'standard' },
+    { eventName: 'Multi Mini', scoringTier: 'standard' },
     { eventName: 'Dance Battle', scoringTier: 'championship' },
     { eventName: 'Table Race', scoringTier: 'championship' },
-    { eventName: 'Line Bucket Challenge', scoringTier: 'championship' },
-    { eventName: 'Water Limbo', scoringTier: 'championship' },
+    { eventName: 'Line Sponge Challenge', scoringTier: 'championship' },
   ],
+};
+
+const DEFAULT_EVENT_GROUP_CONFIG = {
+  period5: {
+    stations: ['Dolphin Training', 'Cutie Crossing', "Tug o' War", 'River Crossing'],
+    multi: ['Round 1', 'Round 2', 'Round 3', 'Round 4'],
+    rapidFire: ['Best Dad Joke', 'Best Bird Call', 'Guess the Tune', 'Best Dance Move', 'Best Impression', 'Wildcard'],
+  },
+  period6: {
+    multiMini: ['Round 1', 'Round 2', 'Round 3', 'Round 4'],
+    championship: ['Dance Battle', 'Table Race', 'Line Sponge Challenge'],
+  },
 };
 
 const RAW_LOG_HEADERS = [
@@ -112,6 +126,7 @@ function logScore(payload) {
     breakdown: buildBreakdownResponse_(summary),
     entryState: buildEntryStateResponse_(summary),
     events: cloneEventConfig_(eventConfig),
+    eventGroups: getEventGroupConfig_(),
     rounds: ROUND_OPTIONS.slice(),
   };
 }
@@ -138,6 +153,7 @@ function getAppData() {
     breakdown: buildBreakdownResponse_(summary),
     entryState: buildEntryStateResponse_(summary),
     events: cloneEventConfig_(eventConfig),
+    eventGroups: getEventGroupConfig_(),
     rounds: ROUND_OPTIONS.slice(),
   };
 }
@@ -166,12 +182,14 @@ function resetAllScores() {
     breakdown: buildBreakdownResponse_(summary),
     entryState: buildEntryStateResponse_(summary),
     events: cloneEventConfig_(eventConfig),
+    eventGroups: getEventGroupConfig_(),
     rounds: ROUND_OPTIONS.slice(),
   };
 }
 
 function saveEventConfig(config) {
   const normalizedConfig = normalizeEventConfigPayload_(config);
+  const eventGroupConfig = normalizeEventGroupConfigPayload_(config && config.eventGroups, normalizedConfig);
   const spreadsheet = ensureSpreadsheet_();
   const lock = LockService.getScriptLock();
 
@@ -179,6 +197,7 @@ function saveEventConfig(config) {
 
   try {
     writeEventConfig_(spreadsheet.getSheetByName(EVENT_CONFIG_SHEET_NAME), normalizedConfig);
+    setEventGroupConfig_(eventGroupConfig);
     updateTotalsSheet_(spreadsheet, normalizedConfig);
   } finally {
     lock.releaseLock();
@@ -192,6 +211,7 @@ function saveEventConfig(config) {
     breakdown: buildBreakdownResponse_(summary),
     entryState: buildEntryStateResponse_(summary),
     events: cloneEventConfig_(normalizedConfig),
+    eventGroups: cloneEventGroupConfig_(eventGroupConfig),
     rounds: ROUND_OPTIONS.slice(),
   };
 }
@@ -417,6 +437,12 @@ function getEventConfig_(spreadsheet) {
     return cloneEventConfig_(DEFAULT_EVENT_CONFIG);
   }
 
+  ensureRequiredEvent_(eventConfig.period5, 'Class Color', 'standard');
+  ensureRequiredEvent_(eventConfig.period5, 'Multi', 'standard');
+  ensureRequiredEvent_(eventConfig.period5, 'Rapid Fire', 'standard');
+  ensureRequiredEvent_(eventConfig.period6, 'Tardy', 'standard');
+  ensureRequiredEvent_(eventConfig.period6, 'Multi Mini', 'standard');
+
   return eventConfig;
 }
 
@@ -635,11 +661,23 @@ function normalizePayload_(payload, eventConfig) {
     return normalizeScorePayload_(payload, eventConfig);
   }
 
+  if (type === 'multi') {
+    return normalizeMultiPayload_(payload, eventConfig);
+  }
+
+  if (type === 'classcolor') {
+    return normalizeClassColorPayload_(payload);
+  }
+
+  if (type === 'tardy') {
+    return normalizeTardyPayload_(payload);
+  }
+
   if (type === 'bonus' || type === 'penalty') {
     return normalizeAdjustmentPayload_(payload, type, eventConfig);
   }
 
-  throw new Error('Type must be score, penalty, or bonus.');
+  throw new Error('Type must be score, multi, penalty, bonus, classcolor, or tardy.');
 }
 
 function normalizeScorePayload_(payload, eventConfig) {
@@ -743,6 +781,144 @@ function normalizeAdjustmentPayload_(payload, type, eventConfig) {
   };
 }
 
+function normalizeMultiPayload_(payload, eventConfig) {
+  const period = String(payload.period || '').trim();
+  const eventName = String(payload.eventName || '').trim();
+  const round = String(payload.round || '').trim();
+  const rawPoints = payload.points || {};
+  const validEvents = period === 'Period 5' ? eventConfig.period5 : eventConfig.period6;
+  const eventConfigItem = getEventConfigItem_(validEvents, eventName);
+  const points = createEmptyPoints_();
+
+  if (period !== 'Period 5' && period !== 'Period 6') {
+    throw new Error('Select Period 5 or Period 6.');
+  }
+
+  if (!eventConfigItem || (eventName !== 'Multi' && eventName !== 'Rapid Fire' && eventName !== 'Multi Mini')) {
+    throw new Error('Select a valid multi event.');
+  }
+
+  if (!round) {
+    throw new Error('Select a valid multi round.');
+  }
+
+  COHORTS.forEach(function (cohort) {
+    const value = Number(rawPoints[cohort.key]);
+    if (!Number.isFinite(value)) {
+      throw new Error('Enter points for every cohort.');
+    }
+    points[cohort.key] = value;
+  });
+
+  return {
+    period: period,
+    eventName: eventName,
+    round: round,
+    places: {
+      cohort10: '',
+      cohort11: '',
+      cohort12: '',
+    },
+    points: points,
+    type: 'multi',
+    note: String(payload.note || '').trim(),
+  };
+}
+
+function normalizeClassColorPayload_(payload) {
+  const period = String(payload.period || '').trim();
+  const eventName = String(payload.eventName || '').trim();
+  const cohortInput = payload.cohorts || {};
+  const points = createEmptyPoints_();
+  const summaryParts = [];
+
+  if (period !== 'Period 5') {
+    throw new Error('Class Color must be submitted for Period 5.');
+  }
+
+  if (eventName !== 'Class Color') {
+    throw new Error('Class Color entries must use the Class Color event.');
+  }
+
+  COHORTS.forEach(function (cohort) {
+    const input = cohortInput[cohort.key] || {};
+    const present = Number(input.present);
+    const wearing = Number(input.wearing);
+    const tardies = Number(input.tardies);
+
+    if (!Number.isFinite(present) || present < 1) {
+      throw new Error('Students present must be at least 1 for each cohort.');
+    }
+
+    if (!Number.isFinite(wearing) || wearing < 0 || wearing > present) {
+      throw new Error('Students wearing color cannot exceed students present.');
+    }
+
+    if (!Number.isFinite(tardies) || tardies < 0) {
+      throw new Error('Tardies cannot be negative.');
+    }
+
+    points[cohort.key] = roundToTwoDecimals_((wearing / present) * 20 + tardies * -1);
+    summaryParts.push('C' + cohort.shortLabel + ': ' + wearing + '/' + present + ' wearing, ' + tardies + ' ' + pluralizeTardy_(tardies));
+  });
+
+  return {
+    period: period,
+    eventName: eventName,
+    round: '',
+    places: {
+      cohort10: '',
+      cohort11: '',
+      cohort12: '',
+    },
+    points: points,
+    type: 'classcolor',
+    note: String(payload.note || '').trim() || summaryParts.join(' | '),
+  };
+}
+
+function normalizeTardyPayload_(payload) {
+  const period = String(payload.period || '').trim();
+  const eventName = String(payload.eventName || '').trim();
+  const cohortInput = payload.cohorts || {};
+  const points = createEmptyPoints_();
+  const summaryParts = [];
+
+  if (period !== 'Period 5' && period !== 'Period 6') {
+    throw new Error('Select Period 5 or Period 6.');
+  }
+
+  if (eventName !== 'Tardy' && eventName !== 'Class Color') {
+    throw new Error('Tardy entries must use the Tardy or Class Color event.');
+  }
+
+  COHORTS.forEach(function (cohort) {
+    const input = cohortInput[cohort.key] || {};
+    const tardies = Number(input.tardies);
+
+    if (!Number.isFinite(tardies) || tardies < 0) {
+      throw new Error('Tardy count cannot be negative.');
+    }
+
+    points[cohort.key] = tardies * -1;
+    summaryParts.push('C' + cohort.shortLabel + ': ' + tardies);
+  });
+
+  return {
+    period: period,
+    eventName: eventName,
+    round: '',
+    places: {
+      cohort10: '',
+      cohort11: '',
+      cohort12: '',
+    },
+    points: points,
+    type: 'tardy',
+    note: String(payload.note || '').trim() || 'Tardies - ' + summaryParts.join(' | '),
+  };
+}
+
 function normalizeEventConfigPayload_(config) {
   const normalized = {
     period5: normalizeEventList_(config && config.period5),
@@ -769,6 +945,9 @@ function normalizeEventConfigPayload_(config) {
   if (Object.keys(duplicateMap).some(function (key) { return duplicateMap[key] > 1; })) {
     throw new Error('Event names must be unique so score entry stays reliable.');
   }
+
+  moveEventToFront_(normalized.period5, 'Class Color');
+  moveEventToFront_(normalized.period6, 'Tardy');
 
   return normalized;
 }
@@ -801,6 +980,79 @@ function cloneEventConfig_(config) {
   };
 }
 
+function getEventGroupConfig_() {
+  const rawConfig = PropertiesService.getScriptProperties().getProperty('EVENT_GROUP_CONFIG');
+  if (!rawConfig) {
+    return cloneEventGroupConfig_(DEFAULT_EVENT_GROUP_CONFIG);
+  }
+
+  try {
+    return normalizeEventGroupConfigPayload_(JSON.parse(rawConfig), null);
+  } catch (error) {
+    return cloneEventGroupConfig_(DEFAULT_EVENT_GROUP_CONFIG);
+  }
+}
+
+function setEventGroupConfig_(config) {
+  PropertiesService.getScriptProperties().setProperty('EVENT_GROUP_CONFIG', JSON.stringify(cloneEventGroupConfig_(config)));
+}
+
+function cloneEventGroupConfig_(config) {
+  return {
+    period5: {
+      stations: normalizeStringList_(config && config.period5 && config.period5.stations),
+      multi: normalizeStringList_(config && config.period5 && config.period5.multi),
+      rapidFire: normalizeStringList_(config && config.period5 && config.period5.rapidFire),
+    },
+    period6: {
+      multiMini: normalizeStringList_(config && config.period6 && config.period6.multiMini),
+      championship: normalizeStringList_(config && config.period6 && config.period6.championship),
+    },
+  };
+}
+
+function normalizeEventGroupConfigPayload_(config, eventConfig) {
+  const fallback = cloneEventGroupConfig_(DEFAULT_EVENT_GROUP_CONFIG);
+  const normalized = cloneEventGroupConfig_(config || fallback);
+
+  normalized.period5.stations = normalized.period5.stations.length ? normalized.period5.stations : fallback.period5.stations;
+  normalized.period5.multi = normalized.period5.multi.length ? normalized.period5.multi : fallback.period5.multi;
+  normalized.period5.rapidFire = normalized.period5.rapidFire.length ? normalized.period5.rapidFire : fallback.period5.rapidFire;
+  normalized.period6.multiMini = normalized.period6.multiMini.length ? normalized.period6.multiMini : fallback.period6.multiMini;
+  normalized.period6.championship = normalized.period6.championship.length ? normalized.period6.championship : fallback.period6.championship;
+
+  if (eventConfig) {
+    const period5Names = eventConfig.period5.map(function (event) { return event.eventName; });
+    const period6Names = eventConfig.period6.map(function (event) { return event.eventName; });
+    normalized.period5.stations = normalized.period5.stations.filter(function (name) {
+      return period5Names.indexOf(name) !== -1 && name !== 'Class Color' && name !== 'Multi' && name !== 'Rapid Fire';
+    });
+    normalized.period6.championship = normalized.period6.championship.filter(function (name) {
+      return period6Names.indexOf(name) !== -1 && name !== 'Tardy' && name !== 'Multi Mini';
+    });
+  }
+
+  return normalized;
+}
+
+function normalizeStringList_(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  const seen = {};
+  return list.map(function (item) {
+    return String(item || '').trim();
+  }).filter(function (item) {
+    const key = item.toLowerCase();
+    if (!item || seen[key]) {
+      return false;
+    }
+    seen[key] = true;
+    return true;
+  });
+}
+
 function normalizeEventConfigItem_(item) {
   if (item && typeof item === 'object') {
     return {
@@ -818,6 +1070,30 @@ function normalizeEventConfigItem_(item) {
 function normalizeScoringTier_(value) {
   const tier = String(value || '').trim();
   return SCORING_TIERS[tier] ? tier : DEFAULT_SCORING_TIER;
+}
+
+function moveEventToFront_(events, eventName) {
+  const index = events.findIndex(function (event) {
+    return event.eventName === eventName;
+  });
+
+  if (index > 0) {
+    events.unshift(events.splice(index, 1)[0]);
+  }
+}
+
+function ensureRequiredEvent_(events, eventName, scoringTier) {
+  if (!getEventConfigItem_(events, eventName)) {
+    events.push({ eventName: eventName, scoringTier: scoringTier });
+  }
+}
+
+function roundToTwoDecimals_(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function pluralizeTardy_(count) {
+  return count === 1 ? 'tardy' : 'tardies';
 }
 
 function getEventConfigItem_(events, eventName) {
@@ -849,6 +1125,11 @@ function createEntryState_(eventConfig) {
 function createPeriod5EntryState_(events) {
   return events.reduce(function (accumulator, event) {
     const eventName = event.eventName;
+    if (eventName === 'Class Color') {
+      accumulator[eventName] = createSavedScoreState_();
+      return accumulator;
+    }
+
     accumulator[eventName] = {
       savedRounds: ROUND_OPTIONS.reduce(function (roundAccumulator, round) {
         roundAccumulator[round] = createSavedScoreState_();
@@ -930,7 +1211,39 @@ function updateEntryState_(entryState, rawLogRow) {
   const type = String(rawLogRow[10] || 'score').trim().toLowerCase();
   const timestamp = formatTimestamp_(rawLogRow[0]);
 
-  if (type !== 'score' || !eventName) {
+  if (!eventName) {
+    return;
+  }
+
+  if ((type === 'classcolor' || type === 'tardy') && period === 'Period 5' && entryState.period5[eventName] && !entryState.period5[eventName].savedRounds) {
+    entryState.period5[eventName] = {
+      saved: true,
+      lastSavedAt: timestamp,
+      note: String(rawLogRow[11] || '').trim(),
+      places: {
+        cohort10: String(rawLogRow[4] || '').trim(),
+        cohort11: String(rawLogRow[5] || '').trim(),
+        cohort12: String(rawLogRow[6] || '').trim(),
+      },
+    };
+    return;
+  }
+
+  if ((type === 'classcolor' || type === 'tardy') && period === 'Period 6' && entryState.period6[eventName]) {
+    entryState.period6[eventName] = {
+      saved: true,
+      lastSavedAt: timestamp,
+      note: String(rawLogRow[11] || '').trim(),
+      places: {
+        cohort10: String(rawLogRow[4] || '').trim(),
+        cohort11: String(rawLogRow[5] || '').trim(),
+        cohort12: String(rawLogRow[6] || '').trim(),
+      },
+    };
+    return;
+  }
+
+  if (type !== 'score' && type !== 'multi') {
     return;
   }
 
@@ -974,7 +1287,7 @@ function getEffectiveRawLogRows_(rows) {
 
   rows.forEach(function (row, index) {
     const type = String(row[10] || 'score').trim().toLowerCase();
-    if (type === 'score') {
+    if (type === 'score' || type === 'multi') {
       latestScoreRowByKey[buildScoreEntryKey_(row)] = {
         row: row,
         index: index,
@@ -1005,7 +1318,7 @@ function buildScoreEntryKey_(rawLogRow) {
     String(rawLogRow[1] || '').trim(),
     String(rawLogRow[2] || '').trim().toLowerCase(),
     String(rawLogRow[3] || '').trim(),
-    'score',
+    String(rawLogRow[10] || 'score').trim().toLowerCase(),
   ].join('::');
 }
 

@@ -294,6 +294,19 @@
       grid-template-columns: 1fr;
     }
 
+    .rapid-fire-winner-wrap {
+      display: none;
+      margin-top: 12px;
+    }
+
+    #multiFields.rapid-fire-mode .multi-points-grid {
+      display: none;
+    }
+
+    #multiFields.rapid-fire-mode .rapid-fire-winner-wrap {
+      display: block;
+    }
+
     label {
       display: block;
       margin-bottom: 6px;
@@ -1568,11 +1581,20 @@
                 </div>
                 <div>
                   <div class="saved-state-pill hidden" id="multiMiniPill" style="margin-bottom: 8px;">Multi Mini</div>
-                  <label for="multiRoundSelect">Round</label>
+                  <label id="multiRoundLabel" for="multiRoundSelect">Round</label>
                   <select id="multiRoundSelect" required></select>
                 </div>
               </div>
-              <div class="place-grid">
+              <div class="rapid-fire-winner-wrap">
+                <label for="rapidFireWinner">Winner</label>
+                <select id="rapidFireWinner">
+                  <option value="">Select winner</option>
+                  <option value="cohort10">C10</option>
+                  <option value="cohort11">C11</option>
+                  <option value="cohort12">C12</option>
+                </select>
+              </div>
+              <div class="place-grid multi-points-grid">
                 <div class="cohort-box cohort10">
                   <div class="cohort-heading"><span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span></div>
                   <label for="multiPoints10">Points</label>
@@ -1775,7 +1797,7 @@
           <div class="settings-card">
             <div class="settings-card-header">
               <h2 class="settings-card-title">Manage Events</h2>
-              <p class="settings-card-copy">Edit the live event lists here. Period 5 keeps rounds. Period 6 stays event-only.</p>
+              <p class="settings-card-copy">Period 5 keeps rounds for Stations. Rapid Fire lists named events. Period 6 stays event-only.</p>
             </div>
 
             <div class="control-grid two" style="margin-bottom: 10px;">
@@ -1868,7 +1890,7 @@
       period5: {
         stations: ['Dolphin Training', 'Cutie Crossing', "Tug o' War", 'River Crossing'],
         multi: ['Round 1', 'Round 2', 'Round 3', 'Round 4'],
-        rapidFire: ['Rapid Fire 1', 'Rapid Fire 2', 'Rapid Fire 3', 'Rapid Fire 4'],
+        rapidFire: ['Best Dad Joke', 'Best Bird Call', 'Guess the Tune', 'Best Dance Move', 'Best Impression', 'Wildcard'],
       },
       period6: {
         multiMini: ['Round 1', 'Round 2', 'Round 3', 'Round 4'],
@@ -1929,7 +1951,9 @@
     const multiEventWrap = document.getElementById('multiEventWrap');
     const multiEventSelect = document.getElementById('multiEventSelect');
     const multiMiniPill = document.getElementById('multiMiniPill');
+    const multiRoundLabel = document.getElementById('multiRoundLabel');
     const multiRoundSelect = document.getElementById('multiRoundSelect');
+    const rapidFireWinner = document.getElementById('rapidFireWinner');
     const noteInput = document.getElementById('noteInput');
     const breakdownList = document.getElementById('breakdownList');
     const leaderboardList = document.getElementById('leaderboardList');
@@ -2259,12 +2283,15 @@
       const showMultiFields = activeType === 'multi';
       const showAdjustmentFields = activeType === 'adjustment';
       const showAdjustmentStandardFields = showAdjustmentFields && !showCustomFields;
+      const showRapidFireWinner = showMultiFields && activePeriod === 'Period 5';
 
       scoreSelectionFields.classList.toggle('hidden', activeType !== 'score');
       scoreFields.classList.toggle('hidden', !showScoreFields);
       multiFields.classList.toggle('hidden', !showMultiFields);
+      multiFields.classList.toggle('rapid-fire-mode', showRapidFireWinner);
       multiEventWrap.classList.add('hidden');
       multiMiniPill.classList.toggle('hidden', !(showMultiFields && activePeriod === 'Period 6'));
+      multiRoundLabel.textContent = showRapidFireWinner ? 'Event' : 'Round';
       adjustmentFields.classList.toggle('hidden', !showAdjustmentFields);
       adjustmentStandardFields.classList.toggle('hidden', !showAdjustmentStandardFields);
       classColorFields.classList.toggle('hidden', !showClassColorFields);
@@ -2276,8 +2303,9 @@
       adjustmentPoints.required = showAdjustmentStandardFields;
       multiEventSelect.required = false;
       multiRoundSelect.required = showMultiFields;
+      rapidFireWinner.required = showRapidFireWinner;
       document.querySelectorAll('.multi-entry-input').forEach(input => {
-        input.required = showMultiFields;
+        input.required = showMultiFields && !showRapidFireWinner;
       });
       document.querySelectorAll('.place-select').forEach(select => {
         select.required = showScoreFields;
@@ -2586,6 +2614,7 @@
       document.querySelectorAll('.multi-entry-input').forEach(input => {
         input.value = '';
       });
+      rapidFireWinner.value = '';
       noteInput.value = '';
     }
 
@@ -2701,10 +2730,26 @@
       }
 
       if (activeType === 'multi') {
+        if (activePeriod === 'Period 5') {
+          const winner = rapidFireWinner.value;
+          return {
+            type: 'multi',
+            period: activePeriod,
+            eventName: 'Rapid Fire',
+            round: multiRoundSelect.value,
+            points: {
+              cohort10: winner === 'cohort10' ? 5 : 0,
+              cohort11: winner === 'cohort11' ? 5 : 0,
+              cohort12: winner === 'cohort12' ? 5 : 0,
+            },
+            note: noteInput.value,
+          };
+        }
+
         return {
           type: 'multi',
           period: activePeriod,
-          eventName: activePeriod === 'Period 5' ? 'Rapid Fire' : 'Multi Mini',
+          eventName: 'Multi Mini',
           round: multiRoundSelect.value,
           points: {
             cohort10: Number(document.getElementById('multiPoints10').value),
@@ -2738,6 +2783,7 @@
           breakdown: result.breakdown,
           entryState: result.entryState,
           events: result.events || loadedEventConfig,
+          eventGroups: result.eventGroups || loadedEventGroups,
         });
         if (activeType === 'adjustment') {
           clearAdjustmentFormAfterSubmit();
@@ -2823,7 +2869,7 @@
         ? [
           { value: 'stations', label: 'Station' },
           { value: 'multi', label: 'Multi' },
-          { value: 'rapidFire', label: 'Rapid Fire' },
+          { value: 'rapidFire', label: 'Rapid Fire Events' },
         ]
         : [
           { value: 'multiMini', label: 'Multi Mini' },
@@ -3561,6 +3607,7 @@
     adjustmentType.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
     multiRoundSelect.addEventListener('change', markFormDirtyAndRefresh);
+    rapidFireWinner.addEventListener('change', markFormDirtyAndRefresh);
     document.querySelectorAll('.multi-entry-input').forEach(input => {
       input.addEventListener('input', markFormDirtyAndRefresh);
     });
