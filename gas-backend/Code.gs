@@ -37,7 +37,7 @@ const DEFAULT_EVENT_GROUP_CONFIG = {
     rapidFire: ['Best Dad Joke', 'Best Bird Call', 'Guess the Tune', 'Best Dance Move', 'Best Impression', 'Wildcard'],
   },
   period6: {
-    multiMini: ['Round 1', 'Round 2', 'Round 3', 'Round 4'],
+    multiMini: ['Donut Dangle', 'Balloon Chase', 'Stump Tug of War'],
     championship: ['Dance Battle', 'Table Race', 'Line Sponge Challenge'],
   },
 };

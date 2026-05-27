@@ -299,12 +299,16 @@
       margin-top: 12px;
     }
 
-    #multiFields.rapid-fire-mode .multi-points-grid {
+    .multi-placement-grid {
       display: none;
     }
 
     #multiFields.rapid-fire-mode .rapid-fire-winner-wrap {
       display: block;
+    }
+
+    #multiFields.multi-mini-mode .multi-placement-grid {
+      display: grid;
     }
 
     label {
@@ -1594,21 +1598,51 @@
                   <option value="cohort12">C12</option>
                 </select>
               </div>
-              <div class="place-grid multi-points-grid">
+              <div class="place-grid multi-placement-grid">
                 <div class="cohort-box cohort10">
                   <div class="cohort-heading"><span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span></div>
-                  <label for="multiPoints10">Points</label>
-                  <input id="multiPoints10" class="multi-entry-input" type="number" step="1" inputmode="numeric" required>
+                  <label class="sr-only" for="multiPlace10">Cohort 10 Place</label>
+                  <select id="multiPlace10" class="multi-place-select" data-cohort="cohort10" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 10 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="multiPlace10">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="multiPlace10">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="multiPlace10">3rd</button>
+                  </div>
                 </div>
                 <div class="cohort-box cohort11">
                   <div class="cohort-heading"><span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span></div>
-                  <label for="multiPoints11">Points</label>
-                  <input id="multiPoints11" class="multi-entry-input" type="number" step="1" inputmode="numeric" required>
+                  <label class="sr-only" for="multiPlace11">Cohort 11 Place</label>
+                  <select id="multiPlace11" class="multi-place-select" data-cohort="cohort11" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 11 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="multiPlace11">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="multiPlace11">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="multiPlace11">3rd</button>
+                  </div>
                 </div>
                 <div class="cohort-box cohort12">
                   <div class="cohort-heading"><span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span></div>
-                  <label for="multiPoints12">Points</label>
-                  <input id="multiPoints12" class="multi-entry-input" type="number" step="1" inputmode="numeric" required>
+                  <label class="sr-only" for="multiPlace12">Cohort 12 Place</label>
+                  <select id="multiPlace12" class="multi-place-select" data-cohort="cohort12" required>
+                    <option value="">Select place</option>
+                    <option value="1st">1st place</option>
+                    <option value="2nd">2nd place</option>
+                    <option value="3rd">3rd place</option>
+                  </select>
+                  <div class="place-buttons" aria-label="Cohort 12 placement">
+                    <button class="place-btn" type="button" data-place="1st" data-target="multiPlace12">1st</button>
+                    <button class="place-btn" type="button" data-place="2nd" data-target="multiPlace12">2nd</button>
+                    <button class="place-btn" type="button" data-place="3rd" data-target="multiPlace12">3rd</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1893,7 +1927,7 @@
         rapidFire: ['Best Dad Joke', 'Best Bird Call', 'Guess the Tune', 'Best Dance Move', 'Best Impression', 'Wildcard'],
       },
       period6: {
-        multiMini: ['Round 1', 'Round 2', 'Round 3', 'Round 4'],
+        multiMini: ['Donut Dangle', 'Balloon Chase', 'Stump Tug of War'],
         championship: ['Dance Battle', 'Table Race', 'Line Sponge Challenge'],
       },
     };
@@ -2284,14 +2318,16 @@
       const showAdjustmentFields = activeType === 'adjustment';
       const showAdjustmentStandardFields = showAdjustmentFields && !showCustomFields;
       const showRapidFireWinner = showMultiFields && activePeriod === 'Period 5';
+      const showMultiMiniPlacements = showMultiFields && activePeriod === 'Period 6';
 
       scoreSelectionFields.classList.toggle('hidden', activeType !== 'score');
       scoreFields.classList.toggle('hidden', !showScoreFields);
       multiFields.classList.toggle('hidden', !showMultiFields);
       multiFields.classList.toggle('rapid-fire-mode', showRapidFireWinner);
+      multiFields.classList.toggle('multi-mini-mode', showMultiMiniPlacements);
       multiEventWrap.classList.add('hidden');
       multiMiniPill.classList.toggle('hidden', !(showMultiFields && activePeriod === 'Period 6'));
-      multiRoundLabel.textContent = showRapidFireWinner ? 'Event' : 'Round';
+      multiRoundLabel.textContent = showMultiFields ? 'Event' : 'Round';
       adjustmentFields.classList.toggle('hidden', !showAdjustmentFields);
       adjustmentStandardFields.classList.toggle('hidden', !showAdjustmentStandardFields);
       classColorFields.classList.toggle('hidden', !showClassColorFields);
@@ -2304,8 +2340,8 @@
       multiEventSelect.required = false;
       multiRoundSelect.required = showMultiFields;
       rapidFireWinner.required = showRapidFireWinner;
-      document.querySelectorAll('.multi-entry-input').forEach(input => {
-        input.required = showMultiFields && !showRapidFireWinner;
+      document.querySelectorAll('.multi-place-select').forEach(select => {
+        select.required = showMultiMiniPlacements;
       });
       document.querySelectorAll('.place-select').forEach(select => {
         select.required = showScoreFields;
@@ -2568,12 +2604,13 @@
       updateLayoutMetrics();
     }
 
-    function updatePlaceOptions() {
-      const selected = [...document.querySelectorAll('.place-select')]
+    function updatePlaceOptionGroup(selectSelector) {
+      const selects = [...document.querySelectorAll(selectSelector)];
+      const selected = selects
         .map(select => select.value)
         .filter(Boolean);
 
-      document.querySelectorAll('.place-select').forEach(select => {
+      selects.forEach(select => {
         [...select.options].forEach(option => {
           option.disabled = option.value && option.value !== select.value && selected.includes(option.value);
         });
@@ -2582,10 +2619,18 @@
 
       document.querySelectorAll('.place-btn').forEach(button => {
         const select = document.getElementById(button.dataset.target);
+        if (!select || !select.matches(selectSelector)) {
+          return;
+        }
         const isSelected = select.value === button.dataset.place;
         button.classList.toggle('selected', isSelected);
         button.disabled = !isSelected && selected.includes(button.dataset.place);
       });
+    }
+
+    function updatePlaceOptions() {
+      updatePlaceOptionGroup('.place-select');
+      updatePlaceOptionGroup('.multi-place-select');
     }
 
     function showStatus(message, good) {
@@ -2611,11 +2656,12 @@
     }
 
     function clearMultiFormAfterSubmit() {
-      document.querySelectorAll('.multi-entry-input').forEach(input => {
-        input.value = '';
+      document.querySelectorAll('.multi-place-select').forEach(select => {
+        select.value = '';
       });
       rapidFireWinner.value = '';
       noteInput.value = '';
+      updatePlaceOptions();
     }
 
     function handlePlaceButtonClick(event) {
@@ -2746,15 +2792,16 @@
           };
         }
 
+        const placeMap = { '1st': 10, '2nd': 7, '3rd': 5 };
         return {
           type: 'multi',
           period: activePeriod,
           eventName: 'Multi Mini',
           round: multiRoundSelect.value,
           points: {
-            cohort10: Number(document.getElementById('multiPoints10').value),
-            cohort11: Number(document.getElementById('multiPoints11').value),
-            cohort12: Number(document.getElementById('multiPoints12').value),
+            cohort10: placeMap[document.getElementById('multiPlace10').value] || 0,
+            cohort11: placeMap[document.getElementById('multiPlace11').value] || 0,
+            cohort12: placeMap[document.getElementById('multiPlace12').value] || 0,
           },
           note: noteInput.value,
         };
@@ -2872,7 +2919,7 @@
           { value: 'rapidFire', label: 'Rapid Fire Events' },
         ]
         : [
-          { value: 'multiMini', label: 'Multi Mini' },
+          { value: 'multiMini', label: 'Multi Mini Events' },
           { value: 'championship', label: 'Championship Events' },
         ];
     }
@@ -3608,8 +3655,11 @@
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
     multiRoundSelect.addEventListener('change', markFormDirtyAndRefresh);
     rapidFireWinner.addEventListener('change', markFormDirtyAndRefresh);
-    document.querySelectorAll('.multi-entry-input').forEach(input => {
-      input.addEventListener('input', markFormDirtyAndRefresh);
+    document.querySelectorAll('.multi-place-select').forEach(select => {
+      select.addEventListener('change', () => {
+        updatePlaceOptions();
+        markFormDirtyAndRefresh();
+      });
     });
     document.getElementById('adjustmentCohort').addEventListener('change', markFormDirtyAndRefresh);
     document.querySelectorAll('.custom-entry-input').forEach(input => {
