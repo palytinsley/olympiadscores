@@ -2211,7 +2211,7 @@
     }
 
     function updateEntryFieldVisibility() {
-      const customType = getCurrentCustomEntryType();
+      const customType = activeType === 'score' ? getCurrentCustomEntryType() : null;
       const isCustom = Boolean(customType);
       const showScoreFields = activeType === 'score' && !isCustom;
       const showMultiFields = activeType === 'multi';
@@ -2229,7 +2229,7 @@
       roundSelect.required = activePeriod === 'Period 5' && !isCustom && activeType === 'score';
       noteInput.required = showAdjustmentFields;
       adjustmentPoints.required = showAdjustmentFields;
-      multiEventSelect.required = showMultiFields;
+      multiEventSelect.required = showMultiFields && activePeriod === 'Period 5';
       multiRoundSelect.required = showMultiFields;
       document.querySelectorAll('.multi-entry-input').forEach(input => {
         input.required = showMultiFields;
