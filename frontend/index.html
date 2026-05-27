@@ -353,6 +353,32 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .extras-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .extras-shortcut-btn {
+      min-height: 68px;
+      border: 1.5px solid rgba(23, 33, 43, 0.14);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: "Lexend", system-ui, sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      box-shadow: inset 0 -2px 0 rgba(23, 33, 43, 0.05);
+      transition: transform 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+
+    .extras-shortcut-btn.active {
+      background: var(--navy);
+      color: #ffffff;
+      border-color: var(--navy);
+    }
+
     .segment-btn,
     .type-btn {
       min-height: 48px;
@@ -1458,7 +1484,7 @@
           <div class="adjustment-toggle" role="group" aria-label="Entry type">
             <button class="type-btn active" type="button" data-type="score">Stations</button>
             <button class="type-btn" type="button" data-type="multi">Multi</button>
-            <button class="type-btn" type="button" data-type="adjustment">Bonus/Penalty</button>
+            <button class="type-btn" type="button" data-type="adjustment">Extras</button>
           </div>
 
           <form id="scoreForm">
@@ -1672,41 +1698,47 @@
             </div>
 
             <div id="adjustmentFields" class="hidden">
-              <div class="control-grid two" style="margin-top: 10px;">
-                <div>
-                  <label for="adjustmentEvent">Station/Event</label>
-                  <select id="adjustmentEvent"></select>
-                </div>
-                <div>
-                  <label for="adjustmentCohort">Cohort</label>
-                  <select id="adjustmentCohort">
-                    <option value="cohort10">Cohort 10</option>
-                    <option value="cohort11">Cohort 11</option>
-                    <option value="cohort12">Cohort 12</option>
-                  </select>
-                </div>
+              <div class="extras-shortcuts" role="group" aria-label="Extras shortcuts">
+                <button class="extras-shortcut-btn" type="button" data-extras-type="classcolor">Class Color</button>
+                <button class="extras-shortcut-btn" type="button" data-extras-type="tardy">Tardy</button>
               </div>
-              <div class="control-grid two" style="margin-top: 10px;">
-                <div>
-                  <label for="adjustmentType">Type</label>
-                  <select id="adjustmentType">
-                    <option value="bonus">Bonus</option>
-                    <option value="penalty">Penalty</option>
-                  </select>
+              <div id="adjustmentStandardFields">
+                <div class="control-grid two" style="margin-top: 10px;">
+                  <div>
+                    <label for="adjustmentEvent">Station/Event</label>
+                    <select id="adjustmentEvent"></select>
+                  </div>
+                  <div>
+                    <label for="adjustmentCohort">Cohort</label>
+                    <select id="adjustmentCohort">
+                      <option value="cohort10">Cohort 10</option>
+                      <option value="cohort11">Cohort 11</option>
+                      <option value="cohort12">Cohort 12</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label for="adjustmentPreset">Preset</label>
-                  <select id="adjustmentPreset">
-                    <option value="">Custom points</option>
-                    <optgroup label="Sportsmanship">
-                      <option value="1" data-type="penalty">Late penalty: −1 per student</option>
-                      <option value="5" data-type="penalty">Phone penalty: −5</option>
-                    </optgroup>
-                  </select>
-                </div>
-                <div>
-                  <label for="adjustmentPoints">Point Value</label>
-                  <input id="adjustmentPoints" type="number" min="1" step="1" inputmode="numeric" placeholder="5">
+                <div class="control-grid two" style="margin-top: 10px;">
+                  <div>
+                    <label for="adjustmentType">Type</label>
+                    <select id="adjustmentType">
+                      <option value="bonus">Bonus</option>
+                      <option value="penalty">Penalty</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="adjustmentPreset">Preset</label>
+                    <select id="adjustmentPreset">
+                      <option value="">Custom points</option>
+                      <optgroup label="Sportsmanship">
+                        <option value="1" data-type="penalty">Late penalty: −1 per student</option>
+                        <option value="5" data-type="penalty">Phone penalty: −5</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="adjustmentPoints">Point Value</label>
+                    <input id="adjustmentPoints" type="number" min="1" step="1" inputmode="numeric" placeholder="5">
+                  </div>
                 </div>
               </div>
             </div>
@@ -1859,6 +1891,7 @@
     let savedStateExpanded = false;
     let suppressScoreSelectionGuard = false;
     let confirmedSavedEditKey = '';
+    let extrasSubType = null;
     let selectionState = {
       period: 'Period 5',
       eventName: '',
@@ -1885,6 +1918,7 @@
     const scoreFields = document.getElementById('scoreFields');
     const multiFields = document.getElementById('multiFields');
     const adjustmentFields = document.getElementById('adjustmentFields');
+    const adjustmentStandardFields = document.getElementById('adjustmentStandardFields');
     const classColorFields = document.getElementById('classColorFields');
     const tardyFields = document.getElementById('tardyFields');
     const adjustmentToggle = document.querySelector('.adjustment-toggle');
@@ -1918,6 +1952,9 @@
     const stickySaveStatus = document.getElementById('stickySaveStatus');
     const stickySaveStatusText = document.getElementById('stickySaveStatusText');
     const appHeader = document.querySelector('.app-header');
+
+    adjustmentFields.insertBefore(classColorFields, adjustmentStandardFields);
+    adjustmentFields.insertBefore(tardyFields, adjustmentStandardFields);
 
     function isApiUrlConfigured() {
       return API_URL && !API_URL.includes('PASTE_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE');
@@ -2187,20 +2224,17 @@
       return eventName === 'Multi' || eventName === 'Rapid Fire' || eventName === 'Multi Mini';
     }
 
+    function isCustomEntryEventName(eventName, period) {
+      return (eventName === 'Class Color' && period === 'Period 5')
+        || (eventName === 'Tardy' && period === 'Period 6');
+    }
+
     function getCustomEntryType(eventName, period) {
-      if (eventName === 'Class Color' && period === 'Period 5') {
-        return 'classcolor';
-      }
-
-      if (eventName === 'Tardy' && period === 'Period 6') {
-        return 'tardy';
-      }
-
       return null;
     }
 
     function getCurrentCustomEntryType() {
-      return getCustomEntryType(eventSelect.value, activePeriod);
+      return null;
     }
 
     function setRequiredForControls(container, required) {
@@ -2214,25 +2248,28 @@
     }
 
     function updateEntryFieldVisibility() {
-      const customType = activeType === 'score' ? getCurrentCustomEntryType() : null;
-      const isCustom = Boolean(customType);
-      const showScoreFields = activeType === 'score' && !isCustom;
+      const showClassColorFields = activeType === 'adjustment' && extrasSubType === 'classcolor';
+      const showTardyFields = activeType === 'adjustment' && extrasSubType === 'tardy';
+      const showCustomFields = showClassColorFields || showTardyFields;
+      const showScoreFields = activeType === 'score';
       const showMultiFields = activeType === 'multi';
-      const showAdjustmentFields = activeType === 'adjustment' && !isCustom;
+      const showAdjustmentFields = activeType === 'adjustment';
+      const showAdjustmentStandardFields = showAdjustmentFields && !showCustomFields;
 
-      scoreSelectionFields.classList.toggle('hidden', activeType !== 'score' && !isCustom);
+      scoreSelectionFields.classList.toggle('hidden', activeType !== 'score');
       scoreFields.classList.toggle('hidden', !showScoreFields);
       multiFields.classList.toggle('hidden', !showMultiFields);
       multiEventWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
       multiMiniPill.classList.toggle('hidden', !(showMultiFields && activePeriod === 'Period 6'));
       adjustmentFields.classList.toggle('hidden', !showAdjustmentFields);
-      classColorFields.classList.toggle('hidden', customType !== 'classcolor');
-      tardyFields.classList.toggle('hidden', customType !== 'tardy');
-      adjustmentToggle.classList.toggle('hidden', isCustom);
-      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5' || isCustom);
-      roundSelect.required = activePeriod === 'Period 5' && !isCustom && activeType === 'score';
-      noteInput.required = showAdjustmentFields;
-      adjustmentPoints.required = showAdjustmentFields;
+      adjustmentStandardFields.classList.toggle('hidden', !showAdjustmentStandardFields);
+      classColorFields.classList.toggle('hidden', !showClassColorFields);
+      tardyFields.classList.toggle('hidden', !showTardyFields);
+      adjustmentToggle.classList.remove('hidden');
+      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
+      roundSelect.required = activePeriod === 'Period 5' && activeType === 'score';
+      noteInput.required = showAdjustmentStandardFields;
+      adjustmentPoints.required = showAdjustmentStandardFields;
       multiEventSelect.required = showMultiFields && activePeriod === 'Period 5';
       multiRoundSelect.required = showMultiFields;
       document.querySelectorAll('.multi-entry-input').forEach(input => {
@@ -2241,8 +2278,15 @@
       document.querySelectorAll('.place-select').forEach(select => {
         select.required = showScoreFields;
       });
-      setRequiredForControls(classColorFields, customType === 'classcolor');
+      setRequiredForControls(classColorFields, showClassColorFields);
       setRequiredForControls(tardyFields, false);
+      document.querySelectorAll('[data-extras-type]').forEach(button => {
+        const buttonType = button.dataset.extrasType;
+        const isVisible = (buttonType === 'classcolor' && activePeriod === 'Period 5')
+          || (buttonType === 'tardy' && activePeriod === 'Period 6');
+        button.classList.toggle('hidden', !isVisible);
+        button.classList.toggle('active', extrasSubType === buttonType);
+      });
       updateCustomPreviews();
     }
 
@@ -2270,9 +2314,23 @@
       const period5Events = loadedEventConfig.period5 || [];
       const period6Events = loadedEventConfig.period6 || [];
       const activeEvents = (activePeriod === 'Period 5' ? period5Events : period6Events)
-        .filter(event => activeType !== 'score' || !isMultiEventName(normalizeEventItem(event).eventName));
-      const allEvents = [...period5Events, ...period6Events]
-        .filter(event => !isMultiEventName(normalizeEventItem(event).eventName));
+        .filter(event => {
+          if (activeType !== 'score') {
+            return true;
+          }
+          const eventName = normalizeEventItem(event).eventName;
+          return !isMultiEventName(eventName) && !isCustomEntryEventName(eventName, activePeriod);
+        });
+      const allEvents = [
+        ...period5Events.filter(event => {
+          const eventName = normalizeEventItem(event).eventName;
+          return !isMultiEventName(eventName) && !isCustomEntryEventName(eventName, 'Period 5');
+        }),
+        ...period6Events.filter(event => {
+          const eventName = normalizeEventItem(event).eventName;
+          return !isMultiEventName(eventName) && !isCustomEntryEventName(eventName, 'Period 6');
+        }),
+      ];
       const activeEventNames = getEventNames(activeEvents);
       const allEventNames = getEventNames(allEvents);
 
@@ -2355,7 +2413,8 @@
       const events = period === 'Period 5'
         ? (loadedEventConfig.period5 || [])
         : (loadedEventConfig.period6 || []);
-      return getEventNames(events);
+      return getEventNames(events)
+        .filter(eventName => !isMultiEventName(eventName) && !isCustomEntryEventName(eventName, period));
     }
 
     function normalizeScoreSelection(selection) {
@@ -2404,11 +2463,8 @@
 
     function getSavedStateKeyForSelection(selection) {
       const normalized = normalizeScoreSelection(selection);
-      const customType = getCustomEntryType(normalized.eventName, normalized.period);
       const savedState = normalized.period === 'Period 5'
-        ? customType
-          ? (getCurrentEntryState().period5[normalized.eventName] || createBlankScoreState())
-          : getSavedRoundState((getCurrentEntryState().period5[normalized.eventName] || { savedRounds: {} }), normalized.round)
+        ? getSavedRoundState((getCurrentEntryState().period5[normalized.eventName] || { savedRounds: {} }), normalized.round)
         : (() => {
           const eventState = getCurrentEntryState().period6[normalized.eventName];
           return eventState && eventState.saved ? eventState : createBlankScoreState();
@@ -2461,6 +2517,7 @@
     }
 
     function setEntryType(type) {
+      extrasSubType = null;
       activeType = type;
       document.querySelectorAll('.type-btn').forEach(button => {
         button.classList.toggle('active', button.dataset.type === type);
@@ -2512,9 +2569,11 @@
     }
 
     function clearAdjustmentFormAfterSubmit() {
+      extrasSubType = null;
       adjustmentPoints.value = '';
       adjustmentPreset.value = '';
       noteInput.value = '';
+      updateEntryFieldVisibility();
     }
 
     function clearMultiFormAfterSubmit() {
@@ -2579,7 +2638,7 @@
     }
 
     function buildPayload() {
-      const customType = getCurrentCustomEntryType();
+      const customType = activeType === 'adjustment' ? extrasSubType : null;
       if (customType === 'classcolor') {
         return {
           type: 'classcolor',
@@ -3151,6 +3210,18 @@
             status: 'Multi entries save manually.',
           };
         }
+        if (extrasSubType === 'classcolor') {
+          return {
+            title: 'Class Color',
+            status: 'Class Color entries save manually.',
+          };
+        }
+        if (extrasSubType === 'tardy') {
+          return {
+            title: 'Tardy',
+            status: 'Tardy entries save manually.',
+          };
+        }
         return {
           title: 'Adjustments save manually',
           status: 'Penalty and bonus entries are not autosaved.',
@@ -3202,7 +3273,7 @@
         ? !eventSelect.value
         : activeType === 'multi'
           ? !multiEventSelect.value || !multiRoundSelect.value
-          : !adjustmentEvent.value;
+          : !extrasSubType && !adjustmentEvent.value;
       const summary = getCurrentSavedSummary();
       const selectedScoreState = activeType === 'score' && eventSelect.value ? getSelectedScoreState() : createBlankScoreState();
 
@@ -3406,6 +3477,7 @@
           return;
         }
 
+        extrasSubType = null;
         attemptScoreSelectionChange({
           period: button.dataset.period,
           eventName: '',
@@ -3416,6 +3488,14 @@
 
     document.querySelectorAll('.type-btn').forEach(button => {
       button.addEventListener('click', () => setEntryType(button.dataset.type));
+    });
+
+    document.querySelectorAll('[data-extras-type]').forEach(button => {
+      button.addEventListener('click', () => {
+        extrasSubType = extrasSubType === button.dataset.extrasType ? null : button.dataset.extrasType;
+        markFormDirtyAndRefresh();
+        updateEntryFieldVisibility();
+      });
     });
 
     document.querySelectorAll('.place-select').forEach(select => {
