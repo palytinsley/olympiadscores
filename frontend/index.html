@@ -2457,6 +2457,10 @@
       document.querySelectorAll('.segment-btn').forEach(button => {
         button.classList.toggle('active', button.dataset.period === activePeriod);
       });
+      const scoreButton = document.querySelector('.type-btn[data-type="score"]');
+      if (scoreButton) {
+        scoreButton.textContent = activePeriod === 'Period 5' ? 'Stations' : 'Events';
+      }
       const multiButton = document.querySelector('.type-btn[data-type="multi"]');
       if (multiButton) {
         multiButton.textContent = activePeriod === 'Period 5' ? 'Rapid Fire' : 'Multi';
