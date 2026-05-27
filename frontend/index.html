@@ -2027,11 +2027,15 @@
 
     function renderTotals(totals) {
       const byKey = Object.fromEntries((totals.cohorts || []).map(item => [item.key, item]));
+      const maxTotal = Math.max(...(totals.cohorts || []).map(cohort => Math.round(cohort.total || 0)));
       totalsGrid.innerHTML = cohorts.map(cohort => {
         const total = Math.round(byKey[cohort.key]?.total || 0);
+        const leaderIcon = maxTotal > 0 && total === maxTotal
+          ? '<i class="ti ti-star" style="font-size:1rem; margin-right:4px;"></i>'
+          : '';
         return `
           <div class="total-card ${cohort.className}">
-            <span>C${cohort.shortLabel} <strong>${total}</strong></span>
+            <span>${leaderIcon}C${cohort.shortLabel} <strong>${total}</strong></span>
           </div>
         `;
       }).join('');
