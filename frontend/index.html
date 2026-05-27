@@ -1559,9 +1559,9 @@
 
             <div id="multiFields" class="hidden">
               <div class="control-grid two" style="margin-top: 10px;">
-                <div id="multiEventWrap">
+                <div id="multiEventWrap" class="hidden">
                   <label for="multiEventSelect">Event</label>
-                  <select id="multiEventSelect" required>
+                  <select id="multiEventSelect">
                     <option value="Multi">Multi</option>
                     <option value="Rapid Fire">Rapid Fire</option>
                   </select>
@@ -2259,7 +2259,7 @@
       scoreSelectionFields.classList.toggle('hidden', activeType !== 'score');
       scoreFields.classList.toggle('hidden', !showScoreFields);
       multiFields.classList.toggle('hidden', !showMultiFields);
-      multiEventWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
+      multiEventWrap.classList.add('hidden');
       multiMiniPill.classList.toggle('hidden', !(showMultiFields && activePeriod === 'Period 6'));
       adjustmentFields.classList.toggle('hidden', !showAdjustmentFields);
       adjustmentStandardFields.classList.toggle('hidden', !showAdjustmentStandardFields);
@@ -2270,7 +2270,7 @@
       roundSelect.required = activePeriod === 'Period 5' && activeType === 'score';
       noteInput.required = showAdjustmentStandardFields;
       adjustmentPoints.required = showAdjustmentStandardFields;
-      multiEventSelect.required = showMultiFields && activePeriod === 'Period 5';
+      multiEventSelect.required = false;
       multiRoundSelect.required = showMultiFields;
       document.querySelectorAll('.multi-entry-input').forEach(input => {
         input.required = showMultiFields;
@@ -2294,9 +2294,7 @@
       const previous = multiRoundSelect.value;
       const options = activePeriod === 'Period 6'
         ? loadedEventGroups.period6.multiMini
-        : multiEventSelect.value === 'Rapid Fire'
-          ? loadedEventGroups.period5.rapidFire
-          : loadedEventGroups.period5.multi;
+        : loadedEventGroups.period5.rapidFire;
       multiRoundSelect.innerHTML = options
         .map(option => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
         .join('');
@@ -2391,6 +2389,10 @@
       document.querySelectorAll('.segment-btn').forEach(button => {
         button.classList.toggle('active', button.dataset.period === activePeriod);
       });
+      const multiButton = document.querySelector('.type-btn[data-type="multi"]');
+      if (multiButton) {
+        multiButton.textContent = activePeriod === 'Period 5' ? 'Rapid Fire' : 'Multi';
+      }
     }
 
     function getCurrentScoreSelection() {
@@ -2698,7 +2700,7 @@
         return {
           type: 'multi',
           period: activePeriod,
-          eventName: activePeriod === 'Period 6' ? 'Multi Mini' : multiEventSelect.value,
+          eventName: activePeriod === 'Period 5' ? 'Rapid Fire' : 'Multi Mini',
           round: multiRoundSelect.value,
           points: {
             cohort10: Number(document.getElementById('multiPoints10').value),
@@ -3204,7 +3206,7 @@
       const entryState = getCurrentEntryState();
       if (activeType !== 'score') {
         if (activeType === 'multi') {
-          const multiEventName = activePeriod === 'Period 6' ? 'Multi Mini' : (multiEventSelect.value || 'Multi');
+          const multiEventName = activePeriod === 'Period 5' ? 'Rapid Fire' : 'Multi Mini';
           return {
             title: `${multiEventName}${multiRoundSelect.value ? ` • ${multiRoundSelect.value}` : ''}`,
             status: 'Multi entries save manually.',
@@ -3272,7 +3274,7 @@
       const nothingSelected = activeType === 'score'
         ? !eventSelect.value
         : activeType === 'multi'
-          ? !multiEventSelect.value || !multiRoundSelect.value
+          ? !multiRoundSelect.value
           : !extrasSubType && !adjustmentEvent.value;
       const summary = getCurrentSavedSummary();
       const selectedScoreState = activeType === 'score' && eventSelect.value ? getSelectedScoreState() : createBlankScoreState();
@@ -3554,10 +3556,6 @@
     adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentType.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
-    multiEventSelect.addEventListener('change', () => {
-      populateMultiRoundSelect();
-      markFormDirtyAndRefresh();
-    });
     multiRoundSelect.addEventListener('change', markFormDirtyAndRefresh);
     document.querySelectorAll('.multi-entry-input').forEach(input => {
       input.addEventListener('input', markFormDirtyAndRefresh);
