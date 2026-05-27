@@ -1988,7 +1988,7 @@
     function renderTotals(totals) {
       const byKey = Object.fromEntries((totals.cohorts || []).map(item => [item.key, item]));
       totalsGrid.innerHTML = cohorts.map(cohort => {
-        const total = byKey[cohort.key]?.total || 0;
+        const total = Math.round(byKey[cohort.key]?.total || 0);
         return `
           <div class="total-card ${cohort.className}">
             <span>C${cohort.shortLabel} <strong>${total}</strong></span>
