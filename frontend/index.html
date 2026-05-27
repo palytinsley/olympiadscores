@@ -2381,11 +2381,11 @@
       const period6Events = loadedEventConfig.period6 || [];
       const activeEvents = (activePeriod === 'Period 5' ? period5Events : period6Events)
         .filter(event => {
-          if (activeType !== 'score') {
-            return true;
-          }
-          const eventName = normalizeEventItem(event).eventName;
-          return !isMultiEventName(eventName) && !isCustomEntryEventName(eventName, activePeriod);
+          const name = normalizeEventItem(event).eventName;
+          if (activeType === 'score' && isMultiEventName(name)) return false;
+          if (activeType === 'score' && activePeriod === 'Period 6' && (name === 'Tardy' || name === 'Multi Mini')) return false;
+          if (activeType === 'score' && isCustomEntryEventName(name, activePeriod)) return false;
+          return true;
         });
       const allEvents = [
         ...period5Events.filter(event => {
@@ -2424,10 +2424,15 @@
         .map(eventName => `<option value="${escapeAttribute(eventName)}">${escapeHtml(eventName)}</option>`)
         .join('');
 
-      if (activeEventNames.includes(previousScoreEvent)) {
+      if (activePeriod === 'Period 6' && activeType === 'score') {
+        eventSelect.innerHTML = '<option value="">Select event…</option>' + eventSelect.innerHTML;
+        eventSelect.value = previousScoreEvent && activeEventNames.includes(previousScoreEvent)
+          ? previousScoreEvent
+          : '';
+      } else if (activeEventNames.includes(previousScoreEvent)) {
         eventSelect.value = previousScoreEvent;
       }
-      if (!eventSelect.value && activeEventNames.length) {
+      if (!(activePeriod === 'Period 6' && activeType === 'score') && !eventSelect.value && activeEventNames.length) {
         eventSelect.value = activeEventNames[0];
       }
 
