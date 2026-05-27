@@ -1462,26 +1462,26 @@
           </div>
 
           <form id="scoreForm">
-            <div id="scoreFields">
-              <div class="control-grid two" style="margin-top: 10px;">
-                <div>
-                  <label for="eventSelect" id="eventLabel">Station</label>
-                  <select id="eventSelect" required></select>
-                  <div class="saved-state-pill" id="scoringTierPill" style="margin-top: 8px;">10 / 7 / 5</div>
-                </div>
-                <div id="roundWrap">
-                  <label for="roundSelect">Round</label>
-                  <select id="roundSelect" required>
-                    <option value="Round 1">Round 1</option>
-                    <option value="Round 2">Round 2</option>
-                    <option value="Round 3">Round 3</option>
-                    <option value="Round 4">Round 4</option>
-                  </select>
-                </div>
+            <div id="scoreSelectionFields" class="control-grid two" style="margin-top: 10px;">
+              <div>
+                <label for="eventSelect" id="eventLabel">Station</label>
+                <select id="eventSelect" required></select>
+                <div class="saved-state-pill" id="scoringTierPill" style="margin-top: 8px;">10 / 7 / 5</div>
               </div>
+              <div id="roundWrap">
+                <label for="roundSelect">Round</label>
+                <select id="roundSelect" required>
+                  <option value="Round 1">Round 1</option>
+                  <option value="Round 2">Round 2</option>
+                  <option value="Round 3">Round 3</option>
+                  <option value="Round 4">Round 4</option>
+                </select>
+              </div>
+            </div>
 
-              <div class="saved-state-panel" id="savedStatePanel" aria-hidden="true"></div>
+            <div class="saved-state-panel" id="savedStatePanel" aria-hidden="true"></div>
 
+            <div id="scoreFields">
               <div class="place-grid">
                 <div class="cohort-box cohort10">
                   <div class="cohort-heading"><span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span></div>
@@ -1527,6 +1527,112 @@
                     <button class="place-btn" type="button" data-place="2nd" data-target="place12">2nd</button>
                     <button class="place-btn" type="button" data-place="3rd" data-target="place12">3rd</button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="classColorFields" class="hidden">
+              <div class="place-grid">
+                <div class="cohort-box cohort10">
+                  <div class="cohort-heading">
+                    <span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span>
+                    <span class="saved-state-pill" id="classColorNet10">Net: —</span>
+                  </div>
+                  <div class="control-grid two">
+                    <div>
+                      <label for="classColorPresent10">Students Present</label>
+                      <input id="classColorPresent10" class="custom-entry-input" type="number" min="1" step="1" inputmode="numeric" required>
+                    </div>
+                    <div>
+                      <label for="classColorWearing10">Students Wearing Color</label>
+                      <input id="classColorWearing10" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" required>
+                    </div>
+                  </div>
+                  <div class="cohort-heading" style="margin: 8px 0 0;">
+                    <span class="saved-state-pill" id="classColorPoints10">—</span>
+                    <span class="saved-state-pill" id="classColorDeduction10">0 pts</span>
+                  </div>
+                  <div style="margin-top: 10px;">
+                    <label for="classColorTardies10">Tardies</label>
+                    <input id="classColorTardies10" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0" data-optional="true">
+                  </div>
+                </div>
+                <div class="cohort-box cohort11">
+                  <div class="cohort-heading">
+                    <span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span>
+                    <span class="saved-state-pill" id="classColorNet11">Net: —</span>
+                  </div>
+                  <div class="control-grid two">
+                    <div>
+                      <label for="classColorPresent11">Students Present</label>
+                      <input id="classColorPresent11" class="custom-entry-input" type="number" min="1" step="1" inputmode="numeric" required>
+                    </div>
+                    <div>
+                      <label for="classColorWearing11">Students Wearing Color</label>
+                      <input id="classColorWearing11" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" required>
+                    </div>
+                  </div>
+                  <div class="cohort-heading" style="margin: 8px 0 0;">
+                    <span class="saved-state-pill" id="classColorPoints11">—</span>
+                    <span class="saved-state-pill" id="classColorDeduction11">0 pts</span>
+                  </div>
+                  <div style="margin-top: 10px;">
+                    <label for="classColorTardies11">Tardies</label>
+                    <input id="classColorTardies11" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0" data-optional="true">
+                  </div>
+                </div>
+                <div class="cohort-box cohort12">
+                  <div class="cohort-heading">
+                    <span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span>
+                    <span class="saved-state-pill" id="classColorNet12">Net: —</span>
+                  </div>
+                  <div class="control-grid two">
+                    <div>
+                      <label for="classColorPresent12">Students Present</label>
+                      <input id="classColorPresent12" class="custom-entry-input" type="number" min="1" step="1" inputmode="numeric" required>
+                    </div>
+                    <div>
+                      <label for="classColorWearing12">Students Wearing Color</label>
+                      <input id="classColorWearing12" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" required>
+                    </div>
+                  </div>
+                  <div class="cohort-heading" style="margin: 8px 0 0;">
+                    <span class="saved-state-pill" id="classColorPoints12">—</span>
+                    <span class="saved-state-pill" id="classColorDeduction12">0 pts</span>
+                  </div>
+                  <div style="margin-top: 10px;">
+                    <label for="classColorTardies12">Tardies</label>
+                    <input id="classColorTardies12" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0" data-optional="true">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="tardyFields" class="hidden">
+              <div class="place-grid">
+                <div class="cohort-box cohort10">
+                  <div class="cohort-heading">
+                    <span class="cohort-chip cohort10"><i class="ti ti-shield"></i>C10</span>
+                    <span class="saved-state-pill" id="tardyDeduction10">0 pts</span>
+                  </div>
+                  <label for="tardyCount10">Tardies</label>
+                  <input id="tardyCount10" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0">
+                </div>
+                <div class="cohort-box cohort11">
+                  <div class="cohort-heading">
+                    <span class="cohort-chip cohort11"><i class="ti ti-sun"></i>C11</span>
+                    <span class="saved-state-pill" id="tardyDeduction11">0 pts</span>
+                  </div>
+                  <label for="tardyCount11">Tardies</label>
+                  <input id="tardyCount11" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0">
+                </div>
+                <div class="cohort-box cohort12">
+                  <div class="cohort-heading">
+                    <span class="cohort-chip cohort12"><i class="ti ti-flame"></i>C12</span>
+                    <span class="saved-state-pill" id="tardyDeduction12">0 pts</span>
+                  </div>
+                  <label for="tardyCount12">Tardies</label>
+                  <input id="tardyCount12" class="custom-entry-input" type="number" min="0" step="1" inputmode="numeric" value="0">
                 </div>
               </div>
             </div>
@@ -1730,9 +1836,13 @@
     const eventSelect = document.getElementById('eventSelect');
     const eventLabel = document.getElementById('eventLabel');
     const scoringTierPill = document.getElementById('scoringTierPill');
+    const scoreSelectionFields = document.getElementById('scoreSelectionFields');
     const roundWrap = document.getElementById('roundWrap');
     const scoreFields = document.getElementById('scoreFields');
     const adjustmentFields = document.getElementById('adjustmentFields');
+    const classColorFields = document.getElementById('classColorFields');
+    const tardyFields = document.getElementById('tardyFields');
+    const adjustmentToggle = document.querySelector('.adjustment-toggle');
     const adjustmentEvent = document.getElementById('adjustmentEvent');
     const adjustmentPreset = document.getElementById('adjustmentPreset');
     const adjustmentPoints = document.getElementById('adjustmentPoints');
@@ -1993,6 +2103,56 @@
       scoringTierPill.textContent = scoringTierOptions[tier].pointsLabel;
     }
 
+    function getCustomEntryType(eventName, period) {
+      if (eventName === 'Class Color' && period === 'Period 5') {
+        return 'classcolor';
+      }
+
+      if (eventName === 'Tardy' && period === 'Period 6') {
+        return 'tardy';
+      }
+
+      return null;
+    }
+
+    function getCurrentCustomEntryType() {
+      return getCustomEntryType(eventSelect.value, activePeriod);
+    }
+
+    function setRequiredForControls(container, required) {
+      container.querySelectorAll('select, input, textarea').forEach(control => {
+        if (required && control.dataset.optional !== 'true') {
+          control.required = true;
+          return;
+        }
+        control.required = false;
+      });
+    }
+
+    function updateEntryFieldVisibility() {
+      const customType = getCurrentCustomEntryType();
+      const isCustom = Boolean(customType);
+      const showScoreFields = activeType === 'score' && !isCustom;
+      const showAdjustmentFields = activeType !== 'score' && !isCustom;
+
+      scoreSelectionFields.classList.toggle('hidden', activeType !== 'score' && !isCustom);
+      scoreFields.classList.toggle('hidden', !showScoreFields);
+      adjustmentFields.classList.toggle('hidden', !showAdjustmentFields);
+      classColorFields.classList.toggle('hidden', customType !== 'classcolor');
+      tardyFields.classList.toggle('hidden', customType !== 'tardy');
+      adjustmentToggle.classList.toggle('hidden', isCustom);
+      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5' || isCustom);
+      roundSelect.required = activePeriod === 'Period 5' && !isCustom && activeType === 'score';
+      noteInput.required = showAdjustmentFields;
+      adjustmentPoints.required = showAdjustmentFields;
+      document.querySelectorAll('.place-select').forEach(select => {
+        select.required = showScoreFields;
+      });
+      setRequiredForControls(classColorFields, customType === 'classcolor');
+      setRequiredForControls(tardyFields, false);
+      updateCustomPreviews();
+    }
+
     function populateEventSelects(options = {}) {
       const {
         preserveForm = false,
@@ -2045,8 +2205,7 @@
       }
 
       eventLabel.textContent = activePeriod === 'Period 5' ? 'Station' : 'Event';
-      roundWrap.classList.toggle('hidden', activePeriod !== 'Period 5');
-      roundSelect.required = activePeriod === 'Period 5';
+      updateEntryFieldVisibility();
 
       // Live polling should refresh dropdown contents and saved-state UI, but it must never
       // clobber unsaved score-entry selections, note text, or the user's current round/event.
@@ -2126,6 +2285,7 @@
 
       if (preserveForm) {
         updateScoringTierPill();
+        updateEntryFieldVisibility();
         renderSavedStatePanel();
         updateStickySaveBar();
       }
@@ -2133,8 +2293,11 @@
 
     function getSavedStateKeyForSelection(selection) {
       const normalized = normalizeScoreSelection(selection);
+      const customType = getCustomEntryType(normalized.eventName, normalized.period);
       const savedState = normalized.period === 'Period 5'
-        ? getSavedRoundState((getCurrentEntryState().period5[normalized.eventName] || { savedRounds: {} }), normalized.round)
+        ? customType
+          ? (getCurrentEntryState().period5[normalized.eventName] || createBlankScoreState())
+          : getSavedRoundState((getCurrentEntryState().period5[normalized.eventName] || { savedRounds: {} }), normalized.round)
         : (() => {
           const eventState = getCurrentEntryState().period6[normalized.eventName];
           return eventState && eventState.saved ? eventState : createBlankScoreState();
@@ -2191,10 +2354,7 @@
       document.querySelectorAll('.type-btn').forEach(button => {
         button.classList.toggle('active', button.dataset.type === type);
       });
-      scoreFields.classList.toggle('hidden', type !== 'score');
-      adjustmentFields.classList.toggle('hidden', type === 'score');
-      noteInput.required = type !== 'score';
-      adjustmentPoints.required = type !== 'score';
+      updateEntryFieldVisibility();
       if (type === 'score') {
         syncScoreFormWithSelection({ preserveExpandedState: true });
       } else {
@@ -2251,7 +2411,95 @@
       select.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    function readWholeNumberInput(id) {
+      const value = Number(document.getElementById(id).value);
+      return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+    }
+
+    function formatPreviewPoints(value) {
+      const rounded = Math.round(value * 10) / 10;
+      return Number.isInteger(rounded) ? `${rounded}` : `${rounded.toFixed(1)}`;
+    }
+
+    function setPreviewText(id, text) {
+      document.getElementById(id).textContent = text;
+    }
+
+    function updateClassColorPreview(cohortNumber) {
+      const presentInput = document.getElementById(`classColorPresent${cohortNumber}`);
+      const wearingInput = document.getElementById(`classColorWearing${cohortNumber}`);
+      const present = Number(presentInput.value);
+      const wearing = Number(wearingInput.value);
+      const tardies = readWholeNumberInput(`classColorTardies${cohortNumber}`);
+
+      if (!present || present <= 0) {
+        setPreviewText(`classColorPoints${cohortNumber}`, '—');
+        setPreviewText(`classColorDeduction${cohortNumber}`, tardies ? `-${tardies} pts` : '0 pts');
+        setPreviewText(`classColorNet${cohortNumber}`, 'Net: —');
+        return;
+      }
+
+      const colorPoints = (Math.max(0, wearing || 0) / present) * 20;
+      const netPoints = colorPoints - tardies;
+      setPreviewText(`classColorPoints${cohortNumber}`, `→ ${formatPreviewPoints(colorPoints)} pts`);
+      setPreviewText(`classColorDeduction${cohortNumber}`, tardies ? `-${tardies} pts` : '0 pts');
+      setPreviewText(`classColorNet${cohortNumber}`, `Net: ${formatPreviewPoints(netPoints)} pts`);
+    }
+
+    function updateTardyPreview(cohortNumber) {
+      const tardies = readWholeNumberInput(`tardyCount${cohortNumber}`);
+      setPreviewText(`tardyDeduction${cohortNumber}`, tardies ? `-${tardies} pts` : '0 pts');
+    }
+
+    function updateCustomPreviews() {
+      [10, 11, 12].forEach(cohortNumber => {
+        updateClassColorPreview(cohortNumber);
+        updateTardyPreview(cohortNumber);
+      });
+    }
+
     function buildPayload() {
+      const customType = getCurrentCustomEntryType();
+      if (customType === 'classcolor') {
+        return {
+          type: 'classcolor',
+          period: 'Period 5',
+          eventName: 'Class Color',
+          cohorts: {
+            cohort10: {
+              present: readWholeNumberInput('classColorPresent10'),
+              wearing: readWholeNumberInput('classColorWearing10'),
+              tardies: readWholeNumberInput('classColorTardies10'),
+            },
+            cohort11: {
+              present: readWholeNumberInput('classColorPresent11'),
+              wearing: readWholeNumberInput('classColorWearing11'),
+              tardies: readWholeNumberInput('classColorTardies11'),
+            },
+            cohort12: {
+              present: readWholeNumberInput('classColorPresent12'),
+              wearing: readWholeNumberInput('classColorWearing12'),
+              tardies: readWholeNumberInput('classColorTardies12'),
+            },
+          },
+          note: noteInput.value,
+        };
+      }
+
+      if (customType === 'tardy') {
+        return {
+          type: 'tardy',
+          period: 'Period 6',
+          eventName: 'Tardy',
+          cohorts: {
+            cohort10: { tardies: readWholeNumberInput('tardyCount10') },
+            cohort11: { tardies: readWholeNumberInput('tardyCount11') },
+            cohort12: { tardies: readWholeNumberInput('tardyCount12') },
+          },
+          note: noteInput.value,
+        };
+      }
+
       if (activeType === 'score') {
         return {
           type: 'score',
@@ -2590,7 +2838,12 @@
 
     function getSelectedScoreState() {
       const entryState = getCurrentEntryState();
+      const customType = getCurrentCustomEntryType();
       if (activePeriod === 'Period 5') {
+        if (customType) {
+          const eventState = entryState.period5[eventSelect.value];
+          return eventState && eventState.saved ? eventState : createBlankScoreState();
+        }
         const eventState = entryState.period5[eventSelect.value] || { savedRounds: {} };
         return getSavedRoundState(eventState, roundSelect.value);
       }
@@ -2610,6 +2863,7 @@
 
     function syncScoreFormWithSelection(options = {}) {
       if (activeType !== 'score') {
+        updateEntryFieldVisibility();
         renderSavedStatePanel();
         updateStickySaveBar();
         return;
@@ -2619,7 +2873,10 @@
         savedStateExpanded = false;
       }
 
-      applyScoreStateToForm(getSelectedScoreState());
+      updateEntryFieldVisibility();
+      if (!getCurrentCustomEntryType()) {
+        applyScoreStateToForm(getSelectedScoreState());
+      }
       formDirty = false;
       selectionState = getCurrentScoreSelection();
       confirmedSavedEditKey = '';
@@ -2632,7 +2889,7 @@
 
     function getScoreSelectionLabel() {
       const eventName = eventSelect.value || 'Select an event';
-      const roundText = activePeriod === 'Period 5' ? ` • ${roundSelect.value}` : '';
+      const roundText = activePeriod === 'Period 5' && !getCurrentCustomEntryType() ? ` • ${roundSelect.value}` : '';
       return `${eventName}${roundText}`;
     }
 
@@ -2642,6 +2899,18 @@
         return {
           title: 'Adjustments save manually',
           status: 'Penalty and bonus entries are not autosaved.',
+        };
+      }
+
+      const customType = getCurrentCustomEntryType();
+      if (customType) {
+        const periodKey = activePeriod === 'Period 5' ? 'period5' : 'period6';
+        const eventState = entryState[periodKey][eventSelect.value] || { saved: false };
+        return {
+          title: eventSelect.value || 'Select an event',
+          status: eventState.saved
+            ? 'Already saved for this period.'
+            : 'Not yet saved.',
         };
       }
 
@@ -2751,7 +3020,7 @@
           label: 'Unsaved Changes',
           labelClass: 'pending',
           title: summary.title,
-          status: 'Ready to save this round.',
+          status: getCurrentCustomEntryType() ? 'Ready to save this entry.' : 'Ready to save this round.',
           statusClass: '',
           buttonText: 'Save',
         };
@@ -2923,6 +3192,7 @@
     eventSelect.addEventListener('change', () => {
       if (suppressScoreSelectionGuard || activeType !== 'score') {
         updateScoringTierPill();
+        updateEntryFieldVisibility();
         updateStickySaveBar();
         return;
       }
@@ -2931,6 +3201,7 @@
     });
     roundSelect.addEventListener('change', () => {
       if (suppressScoreSelectionGuard || activeType !== 'score') {
+        updateEntryFieldVisibility();
         return;
       }
 
@@ -2940,6 +3211,12 @@
     adjustmentEvent.addEventListener('change', markFormDirtyAndRefresh);
     adjustmentPoints.addEventListener('input', markFormDirtyAndRefresh);
     document.getElementById('adjustmentCohort').addEventListener('change', markFormDirtyAndRefresh);
+    document.querySelectorAll('.custom-entry-input').forEach(input => {
+      input.addEventListener('input', () => {
+        updateCustomPreviews();
+        markFormDirtyAndRefresh();
+      });
+    });
 
     adjustmentPreset.addEventListener('change', () => {
       if (adjustmentPreset.value) {
